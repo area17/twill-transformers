@@ -1,6 +1,6 @@
 <?php
 
-namespace A17\Transformers\Transformers\Behaviours;
+namespace A17\TwillTransformers\Behaviours;
 
 trait HasPagination
 {

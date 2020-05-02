@@ -1,23 +1,14 @@
 <?php
 
-namespace A17\Transformers\Transformers\Behaviours;
+namespace A17\TwillTransformers\Behaviours;
 
 use ImageService;
 use A17\Twill\Models\Media;
 use Illuminate\Support\Arr;
-use A17\Transformers\Services\Image\Croppings;
+use A17\TwillTransformers\Services\Image\Croppings;
 
 trait HasMedia
 {
-    public function transformGallery($gallery)
-    {
-        return [
-            'variation' => $this->content['variation'],
-
-            'data' => ['items' => $this->transformImages($gallery)],
-        ];
-    }
-
     public function transformImages($medias)
     {
         return collect($medias)->map(function ($media) {

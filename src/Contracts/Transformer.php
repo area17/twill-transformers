@@ -1,8 +1,8 @@
 <?php
 
-namespace A17\Transformers\Transformers;
+namespace A17\TwillTransformers\Contracts;
 
-interface Contract
+interface Transformer
 {
     public function setData($data);
 

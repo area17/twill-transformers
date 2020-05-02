@@ -7,23 +7,8 @@
 [![Quality Score][ico-code-quality]][link-code-quality]
 [![Total Downloads][ico-downloads]][link-downloads]
 
-This is where your description should go. Try and limit it to a paragraph or two, and maybe throw in a mention of what
-PSRs you support to avoid any confusion with users and contributors.
-
-## Structure
-
-If any of the following are applicable to your project, then the directory structure should follow industry best practices by being named the following.
-
-```
-bin/        
-build/
-docs/
-config/
-src/
-tests/
-vendor/
-```
-
+This package allows you to create transformers to generate view data for your Twill app. It contains a base Transformer 
+class and a series of traits, allowing you not only to transform model data, but also generate all blocks, from Twill's block editor and preview data.
 
 ## Install
 
@@ -33,12 +18,51 @@ Via Composer
 $ composer require area17/twill-transformers
 ```
 
+## Reasoning
+
+The main class of this package was extracted from the work we did for a client where we decided to use Storybook and Twig templates 
+to build the front end. The idea is to free the back end developer from writing front-end code. For this to happen, the whole data
+generation is automated, starting from the controller `view()` call.
+
 ## Usage
 
+For those using the same approach (Storybook + Twig), this is what you have to do to make it all happen:
+
+#### Create your own extension of this class:
+
 ``` php
-$skeleton = new A17\TwillTransformers();
-echo $skeleton->echoPhrase('Hello, League!');
+namespace App\Transformers;
+
+use A17\Transformers\Transformer as TwillTransformer;
+
+abstract class Transformer extends TwillTransformer
+{
+}
 ```
+
+#### Create your first Transformer
+
+Note that data to be transformed is self-contained inside the transformer object. So `$this` holds everything it's responsible for transforming, and as it's usually a Laravel Model descendent, it also has access to everything we usually do with models, accessors, mutators, relationships, presenters, everything. 
+
+``` php
+namespace App\Transformers;
+
+class Seo extends Transformer
+{
+    public function transform()
+    {
+        return [
+            'title' => $this->seo_title,
+
+            'description' => $this->seo_description,
+
+            'urls' => $this->seo_urls,
+        ];
+    }
+}
+``` php
+
+ 
 
 ## Change log
 

@@ -1,15 +1,14 @@
 <?php
 
-namespace A17\Transformers\Transformers;
+namespace A17\TwillTransformers;
 
 use ArrayAccess;
 use ImageService;
 use A17\Twill\Models\Media;
 use Illuminate\Support\Str;
-use A17\Transformers\Services\Image\Croppings;
-use A17\Transformers\Repositories\EventRepository;
-use A17\Transformers\Transformers\Media as MediaTransformer;
-use A17\Transformers\Transformers\Contract as TransformerContract;
+use A17\TwillTransformers\Services\Image\Croppings;
+use A17\TwillTransformers\Media as MediaTransformer;
+use A17\TwillTransformers\Contracts\Transformer as TransformerContract;
 
 abstract class Transformer implements TransformerContract, ArrayAccess
 {
@@ -32,7 +31,7 @@ abstract class Transformer implements TransformerContract, ArrayAccess
     {
         $relation = Str::singular(Str::studly($browserName));
 
-        $class = "A17\Transformers\Models\\{$relation}";
+        $class = "App\Models\\{$relation}";
 
         return $class::find($id);
     }
@@ -112,7 +111,7 @@ abstract class Transformer implements TransformerContract, ArrayAccess
     /**
      * @param mixed $data
      *
-     * @return \A17\Transformers\Transformers\Transformer
+     * @return \A17\TwillTransformers\Transformer
      */
     public function setData($data)
     {
@@ -142,41 +141,11 @@ abstract class Transformer implements TransformerContract, ArrayAccess
     }
 
     /**
-     * @param null $data
-     * @return array
-     */
-    protected function transformSeo($data = null)
-    {
-        return (new Seo($data ?? $this->data))->transform();
-    }
-
-    /**
-     * @param $data
-     * @return array
-     */
-    protected function transformHeader($data)
-    {
-        return (new Header($data ?? $this->data))->transform();
-    }
-
-    /**
-     * @param $data
-     * @return array
-     */
-    protected function transformFooter($data)
-    {
-        return (new Footer($data ?? $this->data))->transform();
-    }
-
-    /**
      * @param null $repositoryClass
      * @return array|\Illuminate\Support\Collection|mixed|string|void|null
      */
     public function transformBlocks($repositoryClass = null)
     {
-        /// TODO: have to abstract repository name here!! &&&
-        $this->repository = app($repositoryClass ?? EventRepository::class);
-
         $blocks = $this->organizeBlocks(null, $this->blocks); // organize root blocks
 
         return (new Block($blocks->values()))->transform();
@@ -230,6 +199,13 @@ abstract class Transformer implements TransformerContract, ArrayAccess
      */
     public function __call($name, $arguments)
     {
+        if (filled($transformer = $this->findTransformerByMethodName($name))) {
+            return call_user_func_array(
+                [$transformer, 'transform'],
+                $arguments,
+            );
+        }
+
         if (method_exists($this->data, $name)) {
             $object = $this->data;
         } elseif (is_array($this->data) && isset($this->data['data'])) {
@@ -250,6 +226,33 @@ abstract class Transformer implements TransformerContract, ArrayAccess
         return call_user_func_array([$object, $name], $arguments);
     }
 
+    public function findTransformerByMethodName($methodName)
+    {
+        if (!Str::startsWith($methodName, 'transform')) {
+            return null;
+        }
+
+        $class = $this->findClass(Str::after($methodName, 'transform'));
+
+        if (filled($class)) {
+            return new $class();
+        }
+
+        return null;
+    }
+
+    public function findClass($class)
+    {
+        $className = collect(explode('_', Str::snake($class)))
+            ->map(fn($part) => Str::studly($part))
+            ->implode('\\');
+
+        return $this->getNamespaces()->reduce(function ($keep, $namespace) {
+            return $keep ??
+                (class_exists($keep = "{$namespace}\\{$class}") ? $keep : null);
+        });
+    }
+
     /**
      * @param $uuid
      * @return mixed
@@ -268,6 +271,14 @@ abstract class Transformer implements TransformerContract, ArrayAccess
     public function offsetSet($offset, $value)
     {
         $this->{$offset} = $value;
+    }
+
+    public function getNamespaces()
+    {
+        return collect([
+            $this->config('namespaces.app_transformers'),
+            $this->config('namespaces.package_transformers'),
+        ])->filter();
     }
 
     /**
@@ -389,5 +400,10 @@ abstract class Transformer implements TransformerContract, ArrayAccess
         }
 
         return $mediaTransformer->transform();
+    }
+
+    public function config($path)
+    {
+        return config("twill-transformers.{$path}");
     }
 }

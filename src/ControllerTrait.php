@@ -6,12 +6,20 @@ use App\Exceptions\MissingRepositoryClass;
 
 trait ControllerTrait
 {
-    private function isJsonResult()
+    /**
+     * @return bool
+     */
+    public function isJsonResult()
     {
         return (config('app.debug') || app()->environment() !== 'production') &&
             request()->query('output') === 'json';
     }
 
+    /**
+     * @param null $data
+     * @param null $view
+     * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View|null
+     */
     public function view($data = null, $view = null)
     {
         $data = $this->repository->makeViewData($data);

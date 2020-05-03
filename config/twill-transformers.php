@@ -8,13 +8,18 @@ return [
     'transformers' => ['block' => Block::class],
 
     'namespaces' => [
-        'package' => ($package = 'A17\TwillTransformers'),
+        'package' => [
+            'root' => ($package = 'A17\TwillTransformers'),
 
-        'package_transformers' => ($packageTransformers =
-            $package . '\Transformers'),
+            'transformers' => ($packageTransformers =
+                $package . '\Transformers'),
+        ],
 
-        'block_transformers' => $packageTransformers . '\Block',
+        'block' => ['transformers' => $packageTransformers . '\Block'],
 
-        'app_transformers' => 'App\Transformers',
+        'app' => [
+            'models' => 'App\Models',
+            'transformers' => 'App\Transformers',
+        ],
     ],
 ];

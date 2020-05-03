@@ -3,19 +3,27 @@
 namespace A17\TwillTransformers;
 
 use ArrayAccess;
-use ImageService;
-use A17\Twill\Models\Media;
 use Illuminate\Support\Str;
-use A17\TwillTransformers\Services\Image\Croppings;
-use A17\TwillTransformers\Media as MediaTransformer;
+use A17\TwillTransformers\Transformers\Block;
+use A17\TwillTransformers\Behaviours\HasMedia;
+use A17\TwillTransformers\Behaviours\HasBlocks;
+use A17\TwillTransformers\Behaviours\HasTranslation;
 use A17\TwillTransformers\Contracts\Transformer as TransformerContract;
+use A17\TwillTransformers\Exceptions\Transformer as TransformerException;
 
 abstract class Transformer implements TransformerContract, ArrayAccess
 {
+    use HasMedia, HasBlocks, HasTranslation;
+
     /**
      * @var array
      */
     public $data;
+
+    /**
+     * @var string|null
+     */
+    protected $pageKey;
 
     public function __construct($data = null)
     {
@@ -23,80 +31,10 @@ abstract class Transformer implements TransformerContract, ArrayAccess
     }
 
     /**
-     * @param $browserName
-     * @param $id
-     * @return mixed
-     */
-    protected function getModelFromBrowserName($browserName, $id)
-    {
-        $relation = Str::singular(Str::studly($browserName));
-
-        $class = "App\Models\\{$relation}";
-
-        return $class::find($id);
-    }
-
-    private function mediaParamsForBlocks()
-    {
-        return Croppings::BLOCK_EDITOR_CROPS;
-    }
-
-    /**
-     * @param $rootBlockId
-     * @param $allBlocks
-     * @return mixed
-     */
-    protected function organizeBlocks($rootBlockId, $allBlocks)
-    {
-        return $allBlocks
-            ->where('parent_id', $rootBlockId)
-            ->map(function ($blockModel) use ($allBlocks) {
-                $block = new Block();
-
-                $block->content = $blockModel->content;
-
-                $block->block = $blockModel;
-
-                $block->type = $blockModel->type;
-
-                $block->setBrowsers($this->renderBrowsers($blockModel));
-
-                $block->pushBlocks(
-                    $this->organizeBlocks($block->block->id, $allBlocks),
-                );
-                return $block;
-            });
-    }
-
-    /**
      * Called after setting data to process data before giving it the the actual transformer.
      */
     protected function preProcessData()
     {
-    }
-
-    /**
-     * @param $blockModel
-     * @return \Illuminate\Support\Collection
-     */
-    protected function renderBrowsers($blockModel)
-    {
-        $models = [];
-
-        foreach (
-            $blockModel->content['browsers'] ?? []
-            as $browserRelation => $ids
-        ) {
-            $models[$browserRelation] = $models[$browserRelation] ?? collect();
-
-            foreach ($ids as $id) {
-                $models[$browserRelation]->push(
-                    $this->getModelFromBrowserName($browserRelation, $id),
-                );
-            }
-        }
-
-        return collect($models);
     }
 
     /**
@@ -112,43 +50,32 @@ abstract class Transformer implements TransformerContract, ArrayAccess
      * @param mixed $data
      *
      * @return \A17\TwillTransformers\Transformer
+     * @throws \A17\TwillTransformers\Exceptions\Transformer
      */
-    public function setData($data)
+    public function setData($data = null)
     {
-        if (filled($this->data = $data)) {
-            $this->preProcessData();
+        if (blank($data)) {
+            return $this;
         }
+
+        if (filled($this->data)) {
+            TransformerException::dataAlreadySet();
+        }
+
+        $this->data =
+            $data instanceof Block ? $data->data ?? $data->block : $data;
+
+        $this->preProcessData();
 
         return $this;
     }
 
     /**
-     * @return array
+     * @return array|null
      */
     public function transform()
     {
-        return $this->sanitize([
-            'template_name' => $this->makeTemplateName(),
-
-            'header' => $this->transformHeader($this->data),
-
-            $this->makePageKey() => $this->transformData($this->data),
-
-            'seo' => $this->transformSeo($this->data),
-
-            'footer' => $this->transformFooter($this->data),
-        ]);
-    }
-
-    /**
-     * @param null $repositoryClass
-     * @return array|\Illuminate\Support\Collection|mixed|string|void|null
-     */
-    public function transformBlocks($repositoryClass = null)
-    {
-        $blocks = $this->organizeBlocks(null, $this->blocks); // organize root blocks
-
-        return (new Block($blocks->values()))->transform();
+        return null;
     }
 
     /**
@@ -180,7 +107,7 @@ abstract class Transformer implements TransformerContract, ArrayAccess
      */
     public function makePageKey()
     {
-        return 'page';
+        return $this->pageKey ?? 'page';
     }
 
     /**
@@ -199,13 +126,30 @@ abstract class Transformer implements TransformerContract, ArrayAccess
      */
     public function __call($name, $arguments)
     {
-        if (filled($transformer = $this->findTransformerByMethodName($name))) {
-            return call_user_func_array(
-                [$transformer, 'transform'],
-                $arguments,
-            );
+        return $this->__callTransformMethod($name, $arguments) ??
+            $this->__forwardCallTo($name, $arguments);
+    }
+
+    public function __callTransformMethod($name, $arguments)
+    {
+        if (Str::startsWith($name, 'transform')) {
+            $transformer = $this->findTransformerByMethodName($name);
+
+            if (filled($transformer)) {
+                return $this->transformerSetDataOrTransmorph(
+                    $transformer,
+                    $arguments[0] ?? $this,
+                )->transform();
+            }
+
+            TransformerException::methodNotFound($name);
         }
 
+        return null;
+    }
+
+    public function __forwardCallTo($name, $arguments)
+    {
         if (method_exists($this->data, $name)) {
             $object = $this->data;
         } elseif (is_array($this->data) && isset($this->data['data'])) {
@@ -226,6 +170,10 @@ abstract class Transformer implements TransformerContract, ArrayAccess
         return call_user_func_array([$object, $name], $arguments);
     }
 
+    /**
+     * @param $methodName
+     * @return \A17\TwillTransformers\Transformer|null
+     */
     public function findTransformerByMethodName($methodName)
     {
         if (!Str::startsWith($methodName, 'transform')) {
@@ -243,25 +191,38 @@ abstract class Transformer implements TransformerContract, ArrayAccess
 
     public function findClass($class)
     {
-        $className = collect(explode('_', Str::snake($class)))
-            ->map(fn($part) => Str::studly($part))
-            ->implode('\\');
-
-        return $this->getNamespaces()->reduce(function ($keep, $namespace) {
-            return $keep ??
-                (class_exists($keep = "{$namespace}\\{$class}") ? $keep : null);
-        });
-    }
-
-    /**
-     * @param $uuid
-     * @return mixed
-     */
-    public function getMediaRawUrl($uuid)
-    {
-        return ImageService::getRawUrl(
-            $uuid instanceof Media ? $uuid->uuid : $uuid,
+        $split = collect(explode('_', Str::snake($class)))->map(
+            fn($part) => Str::studly($part),
         );
+
+        $togheter = collect($split->all()); // clone was not working
+
+        $shifted =
+            $togheter->first() === 'Block' ? $togheter->shift() . '\\' : '';
+
+        $togheter = $shifted . $togheter->implode('');
+
+        $split = $split->implode('\\');
+
+        if ($this->isReservedWord($split)) {
+            $split .= 'Block';
+        }
+
+        if ($this->isReservedWord($togheter)) {
+            $togheter .= 'Block';
+        }
+
+        return $this->getNamespaces()->reduce(function ($keep, $namespace) use (
+            $split,
+            $togheter
+        ) {
+            $splitName = "{$namespace}\\{$split}";
+            $togheterName = "{$namespace}\\{$togheter}";
+
+            return $keep ??
+                ((class_exists($togheterName) ? $togheterName : null) ??
+                    (class_exists($splitName) ? $splitName : null));
+        });
     }
 
     /**
@@ -271,14 +232,6 @@ abstract class Transformer implements TransformerContract, ArrayAccess
     public function offsetSet($offset, $value)
     {
         $this->{$offset} = $value;
-    }
-
-    public function getNamespaces()
-    {
-        return collect([
-            $this->config('namespaces.app_transformers'),
-            $this->config('namespaces.package_transformers'),
-        ])->filter();
     }
 
     /**
@@ -342,6 +295,10 @@ abstract class Transformer implements TransformerContract, ArrayAccess
             return $this->data->{$name};
         }
 
+        if (isset($this->data['data']->{$name})) {
+            return $this->data['data']->{$name};
+        }
+
         if (isset($this->data[$name])) {
             return $this->data[$name];
         }
@@ -378,32 +335,102 @@ abstract class Transformer implements TransformerContract, ArrayAccess
         return null;
     }
 
-    public function transformMedia($object = null, $role = null, $crop = null)
-    {
-        $object = $object ?? $this;
-
-        if ($object instanceof Transformer) {
-            $mediaTransformer =
-                $object instanceof MediaTransformer
-                    ? $object
-                    : swap_class(
-                        get_class($object),
-                        MediaTransformer::class,
-                        $object ?? $this,
-                    );
-        } else {
-            $mediaTransformer = new MediaTransformer($object);
-        }
-
-        if (filled($role)) {
-            $mediaTransformer->setCroppings($role, $crop);
-        }
-
-        return $mediaTransformer->transform();
-    }
-
     public function config($path)
     {
         return config("twill-transformers.{$path}");
+    }
+
+    public function getNamespaces()
+    {
+        return collect([
+            $this->config('namespaces.app.transformers'),
+            $this->config('namespaces.package.transformers'),
+        ])->filter();
+    }
+
+    public function isReservedWord($word)
+    {
+        return collect(
+            $keywords = [
+                'abstract',
+                'and',
+                'array',
+                'as',
+                'break',
+                'callable',
+                'case',
+                'catch',
+                'class',
+                'clone',
+                'const',
+                'continue',
+                'declare',
+                'default',
+                'die',
+                'do',
+                'echo',
+                'else',
+                'elseif',
+                'empty',
+                'enddeclare',
+                'endfor',
+                'endforeach',
+                'endif',
+                'endswitch',
+                'endwhile',
+                'eval',
+                'exit',
+                'extends',
+                'final',
+                'for',
+                'foreach',
+                'function',
+                'global',
+                'goto',
+                'if',
+                'implements',
+                'include',
+                'include_once',
+                'instanceof',
+                'insteadof',
+                'interface',
+                'isset',
+                'list',
+                'namespace',
+                'new',
+                'or',
+                'print',
+                'private',
+                'protected',
+                'public',
+                'require',
+                'require_once',
+                'return',
+                'static',
+                'switch',
+                'throw',
+                'trait',
+                'try',
+                'unset',
+                'use',
+                'var',
+                'while',
+                'xor',
+            ],
+        )->contains(Str::lower($word));
+    }
+
+    public function getData()
+    {
+        return $this->data;
+    }
+
+    public function transformerSetDataOrTransmorph($transformer, $data)
+    {
+        if ($transformer instanceof Block && $data instanceof Block) {
+            return swap_class(get_class($data), get_class($transformer), $data);
+        }
+
+        return $transformer->setData($data);
     }
 }

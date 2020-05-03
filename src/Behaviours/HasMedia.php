@@ -3,31 +3,88 @@
 namespace A17\TwillTransformers\Behaviours;
 
 use ImageService;
-use A17\Twill\Models\Media;
 use Illuminate\Support\Arr;
-use A17\TwillTransformers\Services\Image\Croppings;
+use App\Transformers\Transformer;
+use A17\Twill\Models\Media as MediaModel;
+use A17\TwillTransformers\Support\Croppings;
+use App\Transformers\Media as MediaTransformer;
 
 trait HasMedia
 {
-    public function transformImages($medias)
+    /**
+     * @param $medias
+     * @return \Illuminate\Support\Collection
+     */
+    public function transformImages()
     {
-        return collect($medias)->map(function ($media) {
+        return collect($this->medias)->map(function ($media) {
             return $this->transformImage($media);
         });
     }
 
+    /**
+     * @param null $object
+     * @param null $role
+     * @param null $crop
+     * @return array
+     */
     public function transformImage($object = null, $role = null, $crop = null)
     {
         return $this->generateMediaArray(
-            $object instanceof Media
+            $object instanceof MediaModel
                 ? $object
                 : ($object ?? $this)->imageObject(
-                    $role ?? Croppings::FREE_RATIO_DEFAULT_ROLE_NAME,
-                    $crop ?? Croppings::FREE_RATIO_DEFAULT_CROP_NAME,
+                    $role ?? Croppings::FREE_RATIO_ROLE_NAME,
+                    $crop ?? Croppings::FREE_RATIO_CROP_NAME,
                 ),
         );
     }
 
+    /**
+     * @param null $object
+     * @param null $role
+     * @param null $crop
+     * @return array|null
+     */
+    public function transformMedia($object = null, $role = null, $crop = null)
+    {
+        $object = $object ?? $this;
+
+        if ($object instanceof Transformer) {
+            $mediaTransformer =
+                $object instanceof MediaTransformer
+                    ? $object
+                    : swap_class(
+                        get_class($object),
+                        MediaTransformer::class,
+                        $object ?? $this,
+                    );
+        } else {
+            $mediaTransformer = new MediaTransformer($object);
+        }
+
+        if (filled($role)) {
+            $mediaTransformer->setCroppings($role, $crop);
+        }
+
+        return $mediaTransformer->transform();
+    }
+
+    /**
+     * @param $uuid
+     * @return mixed
+     */
+    public function getMediaRawUrl($uuid)
+    {
+        return ImageService::getRawUrl(
+            $uuid instanceof MediaModel ? $uuid->uuid : $uuid,
+        );
+    }
+
+    /**
+     * @param null $object
+     * @return \Illuminate\Support\Collection
+     */
     public function generateSources($object = null)
     {
         $mediaParams = $this->mediaParams($object);
@@ -56,14 +113,21 @@ trait HasMedia
         return $crops;
     }
 
+    /**
+     * @param $roleName
+     * @param $cropName
+     * @param $mediaParams
+     * @param null $media
+     * @return array
+     */
     public function generateMediaSourceArray(
         $roleName,
         $cropName,
         $mediaParams,
         $media = null
     ) {
-        $media =
-            $this->data instanceof Media
+        $media ??=
+            $this->data instanceof MediaModel
                 ? $this->data
                 : $this->imageObject($roleName, $cropName);
 
@@ -78,9 +142,15 @@ trait HasMedia
         ];
     }
 
+    /**
+     * @param $media
+     * @param $roleName
+     * @param $cropName
+     * @return mixed
+     */
     protected function getUrlWithCrop($media, $roleName, $cropName)
     {
-        if ($media instanceof Media) {
+        if ($media instanceof MediaModel) {
             return ImageService::getUrlWithCrop(
                 $media->uuid,
                 Arr::only($media->pivot->toArray(), [
@@ -96,6 +166,11 @@ trait HasMedia
         return $this->image($roleName, $cropName, [], false, false, $media);
     }
 
+    /**
+     * @param $roleName
+     * @param $cropName
+     * @return array
+     */
     public function renderImage($roleName, $cropName)
     {
         return $this->generateMediaSourceArray(
@@ -105,20 +180,65 @@ trait HasMedia
         );
     }
 
-    private function generateMediaArray($object)
+    /**
+     * @param $object
+     * @return array
+     */
+    protected function generateMediaArray($object)
     {
-        if (blank($object->medias) && !$object->data instanceof Media) {
+        $media = $this->getFirstMedia($object);
+
+        if (blank($media)) {
             return [];
         }
 
-        return $this->getMediaArray($object, $object->medias->first());
+        return $this->getMediaArray($object, $media);
     }
 
+    protected function getFirstMedia($object)
+    {
+        if ($object instanceof MediaModel) {
+            return $object;
+        }
+
+        if (($object->data ?? null) instanceof MediaModel) {
+            return $object->data;
+        }
+
+        if (filled($object->medias ?? null)) {
+            if ($this->croppingsWereSelected()) {
+                $media = $this->imageObject($this->role, $this->crop);
+
+                if (filled($media)) {
+                    return $media;
+                }
+            }
+
+            return $object->medias->first();
+        }
+
+        return null;
+    }
+
+    /**
+     * @param null $object
+     * @return mixed
+     */
     public function mediaParams($object = null)
     {
-        return $object->getMediaParams() ?? Croppings::BLOCK_EDITOR_CROPS;
+        $mediaParams =
+            $object instanceof MediaModel
+                ? $this->getMediaParams()
+                : $object->getMediaParams();
+
+        return $mediaParams ?? Croppings::BLOCK_EDITOR;
     }
 
+    /**
+     * @param $ratio
+     * @param $image
+     * @return float|int
+     */
     public function calculateImageRatio($ratio, $image)
     {
         if ($ratio === null) {
@@ -132,7 +252,12 @@ trait HasMedia
         return $ratio;
     }
 
-    private function getMediaArray($object, $media)
+    /**
+     * @param $object
+     * @param $media
+     * @return array
+     */
+    protected function getMediaArray($object, $media)
     {
         return [
             'src' => $this->getMediaRawUrl($media),
@@ -145,8 +270,19 @@ trait HasMedia
         ];
     }
 
-    private function getMediaArraySource($object, $media, $roleName, $cropName)
-    {
+    /**
+     * @param $object
+     * @param $media
+     * @param $roleName
+     * @param $cropName
+     * @return array
+     */
+    protected function getMediaArraySource(
+        $object,
+        $media,
+        $roleName,
+        $cropName
+    ) {
         $mediaParams = $this->mediaParams($object);
 
         return [
@@ -167,5 +303,13 @@ trait HasMedia
                 ],
             ],
         ];
+    }
+
+    /**
+     * @return array
+     */
+    public function mediaParamsForBlocks()
+    {
+        return Croppings::BLOCK_EDITOR;
     }
 }

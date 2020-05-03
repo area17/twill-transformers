@@ -26,7 +26,8 @@
     "autoload": {
         "psr-4": {
             "A17\\TwillTransformers\\": "src"
-        }
+        },
+        "files": ['app/Support/helpers.php']
     },
     "autoload-dev": {
         "psr-4": {

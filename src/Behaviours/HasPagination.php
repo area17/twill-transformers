@@ -4,6 +4,9 @@ namespace A17\TwillTransformers\Behaviours;
 
 trait HasPagination
 {
+    /**
+     * @return array
+     */
     public function transformPagination()
     {
         return [
@@ -15,6 +18,9 @@ trait HasPagination
         ];
     }
 
+    /**
+     * @return |null
+     */
     public function getNextUrl()
     {
         if (filled($this->paginator()) && $this->paginator()->hasMorePages()) {
@@ -26,6 +32,9 @@ trait HasPagination
         return null;
     }
 
+    /**
+     * @return |null
+     */
     public function getPreviousUrl()
     {
         if (
@@ -40,16 +49,26 @@ trait HasPagination
         return null;
     }
 
+    /**
+     * @param $page
+     * @return mixed
+     */
     public function buildUrlWithPage($page)
     {
         return $this->currentUrl(['page' => $page]);
     }
 
+    /**
+     * @return |null
+     */
     public function paginator()
     {
         return $this->pagination['paginator'] ?? null;
     }
 
+    /**
+     * @return array
+     */
     public function getPages()
     {
         if (blank($this->pagination['pages'] ?? null)) {

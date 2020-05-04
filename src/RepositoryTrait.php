@@ -2,7 +2,7 @@
 
 namespace A17\TwillTransformers;
 
-class RepositoryTrait
+trait RepositoryTrait
 {
     public function makeViewData($subject = null)
     {

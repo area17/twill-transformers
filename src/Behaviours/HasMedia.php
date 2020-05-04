@@ -30,13 +30,13 @@ trait HasMedia
      */
     public function transformImage($object = null, $role = null, $crop = null)
     {
+        $role ??= Croppings::FREE_RATIO_ROLE_NAME;
+        $crop ??= Croppings::FREE_RATIO_CROP_NAME;
+
         return $this->generateMediaArray(
             $object instanceof MediaModel
                 ? $object
-                : ($object ?? $this)->imageObject(
-                    $role ?? Croppings::FREE_RATIO_ROLE_NAME,
-                    $crop ?? Croppings::FREE_RATIO_CROP_NAME,
-                ),
+                : ($object ?? $this)->imageObject($role, $crop),
         );
     }
 
@@ -90,17 +90,19 @@ trait HasMedia
         $mediaParams = $this->mediaParams($object);
 
         $crops = collect($mediaParams)->map(function ($crops, $roleName) use (
-            $mediaParams
+            $mediaParams,
+            $object
         ) {
             return collect($crops)->mapWithKeys(function (
                 $crop,
                 $cropName
-            ) use ($mediaParams, $roleName) {
+            ) use ($mediaParams, $roleName, $object) {
                 return [
                     $cropName => $this->generateMediaSourceArray(
                         $roleName,
                         $cropName,
                         $mediaParams,
+                        $object instanceof MediaModel ? $object : null,
                     ),
                 ];
             });

@@ -276,7 +276,7 @@ If you discover any security related issues, please email antonio@area17.com ins
 
 ## Credits
 
-- [AREA 17][https://github.com/area17]
+- [AREA 17](https://github.com/area17)
 - [Antonio Ribeiro][link-author]
 - [All Contributors][link-contributors]
 

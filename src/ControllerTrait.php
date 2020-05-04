@@ -1,6 +1,6 @@
 <?php
 
-namespace A17\TwillTransformers\Controllers;
+namespace A17\TwillTransformers;
 
 use App\Exceptions\MissingRepositoryClass;
 

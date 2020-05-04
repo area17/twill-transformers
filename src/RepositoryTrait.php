@@ -2,6 +2,9 @@
 
 namespace A17\TwillTransformers;
 
+use App\Support\Templates;
+use A17\TwillTransformers\Exceptions\Repository;
+
 trait RepositoryTrait
 {
     public function makeViewData($subject = null)
@@ -22,11 +25,26 @@ trait RepositoryTrait
 
         return app($this->transformerClass)
             ->setData([
-                'frontendTemplate' =>
-                    $this->getFrontendTemplate($subject) ?? null,
+                'frontend_template' => $this->getTemplateName($subject) ?? null,
                 'type' => $this->repositoryType,
                 'data' => $subject,
             ])
             ->transform();
+    }
+
+    /**
+     * @return string
+     */
+    public function getTemplateName($object = null)
+    {
+        return $this->templateName ?? Repository::templateNameNotDefined();
+    }
+
+    /**
+     * @return string
+     */
+    public function setTemplateName($templateName)
+    {
+        $this->templateName = $templateName;
     }
 }

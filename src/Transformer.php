@@ -87,12 +87,12 @@ abstract class Transformer implements TransformerContract, ArrayAccess
             return 'event-detail';
         }
 
-        if (isset($this->data['data']['frontendTemplate'])) {
-            return $this->data['data']['frontendTemplate'];
+        if (isset($this->data['data']['template_name'])) {
+            return $this->data['data']['template_name'];
         }
 
-        if (isset($this->data['frontendTemplate'])) {
-            return $this->data['frontendTemplate'];
+        if (isset($this->data['template_name'])) {
+            return $this->data['template_name'];
         }
 
         if (isset($this->data['type'])) {

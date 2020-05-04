@@ -22,4 +22,15 @@ return [
             'transformers' => 'App\Transformers',
         ],
     ],
+
+    // Configure block_views_mappings to point all to a single template
+    'blocks' => [
+        'views' => [
+            'mappings' => [
+                'configure' => true,
+
+                'template' => 'site/previews/blocks/block',
+            ],
+        ],
+    ],
 ];

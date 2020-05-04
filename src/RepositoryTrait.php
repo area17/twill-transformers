@@ -25,7 +25,7 @@ trait RepositoryTrait
 
         return app($this->transformerClass)
             ->setData([
-                'frontend_template' => $this->getTemplateName($subject) ?? null,
+                'template_name' => $this->getTemplateName($subject) ?? null,
                 'type' => $this->repositoryType,
                 'data' => $subject,
             ])

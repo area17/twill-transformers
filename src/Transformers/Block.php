@@ -116,8 +116,8 @@ class Block extends Transformer
      */
     public function transform()
     {
-        if ($this->isBlockCollection($this->data)) {
-            return $this->transformBlockCollection();
+        if ($result = $this->transformBlockCollection()) {
+            return $result;
         }
 
         return $this->transformGenericBlock();
@@ -135,10 +135,14 @@ class Block extends Transformer
 
     protected function transformBlockCollection()
     {
-        return collect($this->data)->map(function ($item) {
+        if (!$this->isBlockCollection($collection = $this->data)) {
+            return null;
+        }
+
+        return collect($collection)->map(function ($item) {
             return $item instanceof Block
                 ? $item->transform()
-                : (new self($item))->transform();
+                : (new self($item))->setActiveLocale($this)->transform();
         });
     }
 

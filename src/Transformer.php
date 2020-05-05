@@ -18,7 +18,17 @@ abstract class Transformer implements TransformerContract, ArrayAccess
     /**
      * @var array
      */
-    public $data;
+    private $data;
+
+    /**
+     * @var string
+     */
+    protected $activeLocale;
+
+    /**
+     * @var string
+     */
+    protected $oldLocale;
 
     /**
      * @var string|null
@@ -28,6 +38,10 @@ abstract class Transformer implements TransformerContract, ArrayAccess
     public function __construct($data = null)
     {
         $this->setData($data);
+    }
+
+    function __destruct() {
+        $this->removeActiveLocale();
     }
 
     /**
@@ -64,6 +78,8 @@ abstract class Transformer implements TransformerContract, ArrayAccess
 
         $this->data =
             $data instanceof Block ? $data->data ?? $data->block : $data;
+
+        $this->setActiveLocale($data);
 
         $this->preProcessData();
 
@@ -183,7 +199,7 @@ abstract class Transformer implements TransformerContract, ArrayAccess
         $class = $this->findClass(Str::after($methodName, 'transform'));
 
         if (filled($class)) {
-            return new $class();
+            return (new $class())->setActiveLocale($this);
         }
 
         return null;
@@ -432,5 +448,38 @@ abstract class Transformer implements TransformerContract, ArrayAccess
         }
 
         return $transformer->setData($data);
+    }
+
+    public function getActiveLocale()
+    {
+        return $this->activeLocale ?? fallback_locale();
+    }
+
+    protected function setActiveLocale($locale)
+    {
+        if (!is_string($locale)) {
+            if (isset($locale['active_locale'])) {
+                $locale = $locale['active_locale'];
+            } elseif ($locale instanceof Transformer) {
+                $locale = $locale->getActiveLocale();
+            } else {
+                $locale = $this->getActiveLocale() ?? null;
+            }
+        }
+
+        $this->oldLocale = locale();
+
+        $this->activeLocale = $locale;
+
+        set_local_locale($locale);
+
+        return $this;
+    }
+
+    protected function removeActiveLocale()
+    {
+        if (isset($this->oldLocale)) {
+            set_local_locale($this->oldLocale);
+        }
     }
 }

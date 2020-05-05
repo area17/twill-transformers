@@ -28,6 +28,7 @@ trait RepositoryTrait
                 'template_name' => $this->getTemplateName($subject) ?? null,
                 'type' => $this->repositoryType,
                 'data' => $subject,
+                'active_locale' => $this->getActiveLocale($subject),
             ])
             ->transform();
     }
@@ -46,5 +47,12 @@ trait RepositoryTrait
     public function setTemplateName($templateName)
     {
         $this->templateName = $templateName;
+    }
+
+    protected function getActiveLocale($model)
+    {
+        return $model->translations->pluck('locale')->contains(locale())
+            ? locale()
+            : fallback_locale();
     }
 }

@@ -19,6 +19,8 @@ trait HasBlocks
             ->map(function ($blockModel) use ($allBlocks) {
                 $block = new Block();
 
+                $block->setActiveLocale($this);
+
                 $block->content = $blockModel->content;
 
                 $block->block = $blockModel;
@@ -69,7 +71,9 @@ trait HasBlocks
             return null;
         }
 
-        return (new Block($blocks->values()))->transform();
+        return (new Block($blocks->values()))
+            ->setActiveLocale($this)
+            ->transform();
     }
 
     /**

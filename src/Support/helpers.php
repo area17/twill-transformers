@@ -22,3 +22,15 @@ if (!function_exists('_transform')) {
             : $model->transform();
     }
 }
+
+if (!function_exists('set_local_locale')) {
+    function set_local_locale($locale)
+    {
+        config([
+            'app.locale' => $locale,
+            'translatable.locale' => $locale,
+        ]);
+    }
+}
+
+

@@ -63,9 +63,11 @@ trait HasBlocks
     /**
      * @return array|\Illuminate\Support\Collection|mixed|string|void|null
      */
-    public function transformBlocks()
+    public function transformBlocks($model = null)
     {
-        $blocks = $this->organizeBlocks(null, $this->blocks); // organize root blocks
+        $model = $model ?? $this;
+
+        $blocks = $this->organizeBlocks(null, $model->blocks); // organize root blocks
 
         if (blank($blocks)) {
             return null;

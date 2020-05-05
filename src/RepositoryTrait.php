@@ -9,10 +9,8 @@ use Astrotomic\Translatable\Contracts\Translatable;
 
 trait RepositoryTrait
 {
-    public function makeViewData($subject = null)
+    public function makeViewData($subject = [])
     {
-        $subject = $subject ?? [];
-
         if (is_numeric($subject)) {
             $subject = $this->getById($subject);
         }

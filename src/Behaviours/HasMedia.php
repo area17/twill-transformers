@@ -48,7 +48,7 @@ trait HasMedia
      */
     public function transformMedia($object = null, $role = null, $crop = null)
     {
-        $object = $object ?? $this;
+        $object ??= $this;
 
         if ($object instanceof Transformer) {
             $mediaTransformer =
@@ -244,7 +244,7 @@ trait HasMedia
     public function calculateImageRatio($ratio, $image)
     {
         if ($ratio === null) {
-            $image = $image ?? $this->medias->first();
+            $image ??= $this->medias->first();
 
             $ratio =
                 ($image->pivot->crop_w ?? $image->width) /

@@ -65,7 +65,7 @@ trait HasBlocks
      */
     public function transformBlocks($model = null)
     {
-        $model = $model ?? $this;
+        $model ??= $this;
 
         $blocks = $this->organizeBlocks(null, $model->blocks); // organize root blocks
 

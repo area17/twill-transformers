@@ -3,7 +3,9 @@
 namespace A17\TwillTransformers;
 
 use App\Support\Templates;
+use A17\Twill\Models\Model;
 use A17\TwillTransformers\Exceptions\Repository;
+use Astrotomic\Translatable\Contracts\Translatable;
 
 trait RepositoryTrait
 {
@@ -51,8 +53,12 @@ trait RepositoryTrait
 
     protected function getActiveLocale($model)
     {
-        return $model->translations->pluck('locale')->contains(locale())
-            ? locale()
-            : fallback_locale();
+        if ($model instanceof Translatable) {
+            return $model->translations->pluck('locale')->contains(locale())
+                ? locale()
+                : fallback_locale();
+        }
+
+        return locale();
     }
 }

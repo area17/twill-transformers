@@ -260,7 +260,7 @@ abstract class Transformer implements TransformerContract, ArrayAccess
             isset($this->data->{$offset}) ||
             isset($this->data[$offset]) ||
             isset($this->data['data'][$offset]) ||
-            //(isset($this['content'][$offset]) ||
+            isset($this->content[$offset]) ||
             isset($this->data['content'][$offset]) ||
             isset($this->data['data'][$offset]) ||
             isset($this->data['data']['content'][$offset]) ||

@@ -8,9 +8,20 @@ use A17\TwillTransformers\Exceptions\Block as BlockException;
 
 class Block extends Transformer
 {
+    /**
+     * @var array
+     */
     public $__browsers = [];
 
+    /**
+     * @var array
+     */
     protected $__blocks = [];
+
+    /**
+     * @var string
+     */
+    protected $type;
 
     /**
      * Block constructor.

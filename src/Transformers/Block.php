@@ -81,7 +81,7 @@ class Block extends Transformer
     protected function transformBlock()
     {
         if (filled($transformer = $this->findBlockTransformer($this))) {
-            return $transformer->transform();
+            return $this->transformAndAddType($transformer);
         }
 
         if (filled($raw = $this->transformBlockRaw())) {
@@ -148,18 +148,14 @@ class Block extends Transformer
 
     protected function transformGenericBlock()
     {
-        $type = $this->type ?? null;
+        return $this->transformBlock() ?? null;
+    }
 
-        $result = $this->transformBlock() ?? null;
+    protected function transformAndAddType($transformer)
+    {
+        $result = $transformer->transform();
 
-        if (blank($result) || blank($type)) {
-            return null;
-        }
-
-        if (filled($type)) {
-            $result = ['type' => $type] + $result;
-        }
-
-        return $result;
+        // The type of the block may change during transform()
+        return ['type' => $transformer->type ?? null] + $transformer->transform();
     }
 }

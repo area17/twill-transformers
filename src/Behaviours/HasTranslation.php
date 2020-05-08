@@ -11,6 +11,10 @@ trait HasTranslation
      */
     protected function translated($source, $property = null)
     {
+        if (is_string($source)) {
+            return $source;
+        }
+        
         $translated = is_array($source)
             ? $this->getTranslated($source)
             : $this->translatedInput($source, $this->getActiveLocale());

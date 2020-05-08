@@ -51,7 +51,7 @@ trait RepositoryTrait
 
     protected function getActiveLocale($model)
     {
-        if ($model instanceof Translatable) {
+        if (filled($model->translations ?? null)) {
             return $model->translations->pluck('locale')->contains(locale())
                 ? locale()
                 : fallback_locale();

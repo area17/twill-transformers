@@ -74,7 +74,7 @@ trait HasBlocks
         }
 
         return (new Block($blocks->values()))
-            ->setActiveLocale($this)
+            ->setActiveLocale($model)
             ->transform();
     }
 

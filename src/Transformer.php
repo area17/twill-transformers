@@ -40,7 +40,8 @@ abstract class Transformer implements TransformerContract, ArrayAccess
         $this->setData($data);
     }
 
-    function __destruct() {
+    function __destruct()
+    {
         $this->removeActiveLocale();
     }
 
@@ -211,12 +212,12 @@ abstract class Transformer implements TransformerContract, ArrayAccess
             fn($part) => Str::studly($part),
         );
 
-        $togheter = collect($split->all()); // clone was not working
+        $together = collect($split->all()); // clone was not working
 
         $shifted =
-            $togheter->first() === 'Block' ? $togheter->shift() . '\\' : '';
+            $together->first() === 'Block' ? $together->shift() . '\\' : '';
 
-        $togheter = $shifted . $togheter->implode('');
+        $together = $shifted . $together->implode('');
 
         $split = $split->implode('\\');
 
@@ -224,19 +225,19 @@ abstract class Transformer implements TransformerContract, ArrayAccess
             $split .= 'Block';
         }
 
-        if ($this->isReservedWord($togheter)) {
-            $togheter .= 'Block';
+        if ($this->isReservedWord($together)) {
+            $together .= 'Block';
         }
 
         return $this->getNamespaces()->reduce(function ($keep, $namespace) use (
             $split,
-            $togheter
+            $together
         ) {
             $splitName = "{$namespace}\\{$split}";
-            $togheterName = "{$namespace}\\{$togheter}";
+            $togetherName = "{$namespace}\\{$together}";
 
             return $keep ??
-                ((class_exists($togheterName) ? $togheterName : null) ??
+                ((class_exists($togetherName) ? $togetherName : null) ??
                     (class_exists($splitName) ? $splitName : null));
         });
     }

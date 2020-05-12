@@ -32,5 +32,3 @@ if (!function_exists('set_local_locale')) {
         ]);
     }
 }
-
-

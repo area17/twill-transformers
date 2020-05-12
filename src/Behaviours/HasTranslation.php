@@ -14,7 +14,7 @@ trait HasTranslation
         if (is_string($source)) {
             return $source;
         }
-        
+
         $translated = is_array($source)
             ? $this->getTranslated($source)
             : $this->translatedInput($source, $this->getActiveLocale());
@@ -41,7 +41,8 @@ trait HasTranslation
         }
 
         if (is_array($text)) {
-            return $text[$this->getActiveLocale() ?? locale()] ?? ($text[fallback_locale()] ?? '');
+            return $text[$this->getActiveLocale() ?? locale()] ??
+                ($text[fallback_locale()] ?? '');
         }
 
         return null;

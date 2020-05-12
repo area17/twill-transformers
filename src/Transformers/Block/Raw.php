@@ -2,6 +2,8 @@
 
 namespace A17\TwillTransformers\Transformers\Block;
 
+use Illuminate\Support\Str;
+use Illuminate\Support\Collection;
 use A17\TwillTransformers\Transformers\Block;
 
 class Raw extends Block
@@ -12,20 +14,18 @@ class Raw extends Block
     public function transform()
     {
         return [
+            'type' => Str::kebab(Str::camel($this->type)),
+
             'data' => $this->transformRawBlockData($this),
         ];
     }
 
     /**
      * @param \A17\TwillTransformers\Transformers\Block $block
-     * @return \Illuminate\Support\Collection|null
+     * @return \Illuminate\Support\Collection
      */
-    protected function transformRawBlockData(Block $block)
+    protected function transformBlockContent(Block $block): Collection
     {
-        if (!is_array($block->content)) {
-            return null;
-        }
-
         $data = collect($block->content)
             ->keys()
             ->mapWithKeys(function ($key) use ($block) {
@@ -40,13 +40,45 @@ class Raw extends Block
             });
 
         if (filled($block->medias ?? null) && $block->medias->count() > 0) {
-            $data['image'] = [
-                'type' => 'image',
-
-                'data' => $block->transformMedia($block),
-            ];
+            $data['image'] = $block->transformMedia($block);
         }
 
         return $data;
+    }
+
+    /**
+     * @param \A17\TwillTransformers\Transformers\Block $block
+     * @return \Illuminate\Support\Collection|null
+     */
+    protected function transformRawBlockData(Block $block)
+    {
+        if (!is_array($block->content)) {
+            return null;
+        }
+
+        $data = $this->transformBlockContent($block);
+
+        $subBlocks = $this->transformSubBlocks($block->blocks);
+
+        return collect($data)->merge($subBlocks);
+    }
+
+    private function transformSubBlocks(Collection $blocks)
+    {
+        $subBlocks = $blocks->map(function ($block) {
+            $data = $this->transformBlockContent($block);
+
+            if (blank($data) && filled($block->blocks)) {
+                return $this->transformSubBlocks($block->blocks);
+            }
+
+            return $data;
+        });
+
+        if (filled($subBlocks)) {
+            return ['items' => $subBlocks];
+        }
+
+        return [];
     }
 }

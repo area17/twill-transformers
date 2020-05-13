@@ -58,7 +58,7 @@ abstract class Transformer implements TransformerContract, ArrayAccess
      */
     protected function sanitize($array)
     {
-        return to_array($array);
+        return convert_blanks_to_nulls(to_array($array));
     }
 
     /**

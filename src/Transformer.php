@@ -100,10 +100,6 @@ abstract class Transformer implements TransformerContract, ArrayAccess
      */
     protected function makeTemplateName()
     {
-        if (($this->data['type'] ?? null) === 'event') {
-            return 'event-detail';
-        }
-
         if (isset($this->data['data']['template_name'])) {
             return $this->data['data']['template_name'];
         }

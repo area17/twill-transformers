@@ -110,6 +110,10 @@ class Block extends Transformer
     {
         $block ??= $this;
 
+        if (blank($block->type)) {
+            throw new \Exception('Block is missing type');
+        }
+
         $transformer = $this->findTransformerByMethodName(
             'transformBlock' . Str::studly($block->type),
         );
@@ -168,5 +172,15 @@ class Block extends Transformer
 
         // The type of the block may change during transform()
         return ['type' => $transformer->type ?? null] + $transformer->transform();
+    }
+
+    protected function setBlockType($data)
+    {
+        $type = is_string($data) ? $data : ($data->type ?? $data['type'] ?? null);
+
+        if (blank($this->type = $this->type ?? $type))
+        {
+            throw new \Exception('Data for block must contain a type.');
+        }
     }
 }

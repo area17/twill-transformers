@@ -82,6 +82,8 @@ abstract class Transformer implements TransformerContract, ArrayAccess
 
         $this->setActiveLocale($data);
 
+        $this->setBlockType($data);
+
         $this->preProcessData();
 
         return $this;
@@ -478,5 +480,10 @@ abstract class Transformer implements TransformerContract, ArrayAccess
         if (isset($this->oldLocale)) {
             set_local_locale($this->oldLocale);
         }
+    }
+
+    protected function setBlockType($data)
+    {
+        /// implemented on Transformer Block class
     }
 }

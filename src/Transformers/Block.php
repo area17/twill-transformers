@@ -190,7 +190,7 @@ class Block extends Transformer
         $this->type = Str::snake(Str::afterLast(get_class($this), '\\'));
 
         if ($this->type === 'block') {
-            throw new \Exception('Data for block must contain a type.');
+            throw new \Exception('Data for block must contain a type. Could not infer type.');
         }
     }
 }

@@ -3,7 +3,7 @@
 namespace A17\TwillTransformers\Behaviours;
 
 use Illuminate\Support\Str;
-use A17\TwillTransformers\Transformers\Block;
+use A17\TwillTransformers\Transformers\Block as BlockTransformer;
 
 trait HasBlocks
 {
@@ -17,7 +17,7 @@ trait HasBlocks
         return $allBlocks
             ->where('parent_id', $rootBlockId)
             ->map(function ($blockModel) use ($allBlocks) {
-                $block = new Block();
+                $block = new BlockTransformer();
 
                 $block->setActiveLocale($this);
 
@@ -73,7 +73,7 @@ trait HasBlocks
             return null;
         }
 
-        return (new Block($blocks->values()))
+        return (new BlockTransformer($blocks->values()))
             ->setActiveLocale($model)
             ->transform();
     }
@@ -102,6 +102,6 @@ trait HasBlocks
     {
         return is_traversable($element) &&
             isset($element[0]) &&
-            $element[0] instanceof Block;
+            $element[0] instanceof BlockTransformer;
     }
 }

@@ -171,15 +171,25 @@ class Block extends Transformer
         $result = $transformer->transform();
 
         // The type of the block may change during transform()
-        return ['type' => $transformer->type ?? null] + $transformer->transform();
+        return ['type' => $transformer->type ?? null] +
+            $transformer->transform();
     }
 
     protected function setBlockType($data)
     {
-        $type = is_string($data) ? $data : ($data->type ?? $data['type'] ?? null);
+        $type = $this->isBlockCollection($data)
+            ? 'block-collection'
+            : (is_string($data)
+                ? $data
+                : $data->type ?? ($data['type'] ?? null));
 
-        if (blank($this->type = $this->type ?? $type))
-        {
+        if (filled($this->type = $this->type ?? $type)) {
+            return;
+        }
+
+        $this->type = Str::snake(Str::afterLast(get_class($this), '\\'));
+
+        if ($this->type === 'block') {
             throw new \Exception('Data for block must contain a type.');
         }
     }

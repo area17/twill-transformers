@@ -3,7 +3,7 @@
 use A17\Transformers\Transformers\Block;
 
 return [
-    'templates' => ['default' => 'front.template'],
+    'templates' => ['default' => 'front.layouts.app'],
 
     'transformers' => ['block' => Block::class],
 

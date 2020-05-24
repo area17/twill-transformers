@@ -30,10 +30,10 @@ class Raw extends Block
             ->keys()
             ->mapWithKeys(function ($key) use ($block) {
                 $content = array_key_exists(
-                    app()->getLocale(),
+                    locale(),
                     collect($block->content[$key] ?? [])->toArray(),
                 )
-                    ? $block->content[$key][app()->getLocale()]
+                    ? $block->content[$key][locale()]
                     : $block->content[$key] ?? null;
 
                 return [$key => $content];

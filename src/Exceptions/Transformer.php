@@ -5,19 +5,38 @@ namespace A17\TwillTransformers\Exceptions;
 class Transformer extends \Exception
 {
     /**
-     * @param $method
-     * @throws \A17\TwillTransformers\Exceptions\Transformer
+     * @param $type
+     * @throws \A17\TwillTransformers\Exceptions\Block
      */
-    public static function methodNotFound($method)
+    public static function missingOnController()
     {
-        throw new self("Transform method not found '{$method}'.");
+        throw new self(
+            'Transformer class not available. ' .
+                "You can either create a '\$repositoryClass' property " .
+                "or a '\$transformerClass' on your Controller, or you " .
+                'can also pass a Transformer to be used directly.',
+        );
     }
 
     /**
-     * @throws \A17\TwillTransformers\Exceptions\Transformer
+     * @param $type
+     * @throws \A17\TwillTransformers\Exceptions\Block
      */
-    public static function dataAlreadySet()
+    public static function missingOnRepository()
     {
-        throw new self('Data for the transformer has already been set.');
+        throw new self(
+            "Transformer class not available. You probably need to create a '\$transformerClass' on your Repository.",
+        );
+    }
+
+    /**
+     * @param $type
+     * @throws \A17\TwillTransformers\Exceptions\Block
+     */
+    public static function methodNotFound($method)
+    {
+        throw new self(
+            "Transformer or transformer method not found: '$method()'",
+        );
     }
 }

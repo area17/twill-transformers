@@ -6,14 +6,19 @@ use ArrayAccess;
 use Illuminate\Support\Str;
 use A17\TwillTransformers\Transformers\Block;
 use A17\TwillTransformers\Behaviours\HasMedia;
+use A17\TwillTransformers\Exceptions\Template;
 use A17\TwillTransformers\Behaviours\HasBlocks;
+use A17\TwillTransformers\Behaviours\HasConfig;
+use A17\TwillTransformers\Behaviours\ClassFinder;
 use A17\TwillTransformers\Behaviours\HasTranslation;
 use A17\TwillTransformers\Contracts\Transformer as TransformerContract;
 use A17\TwillTransformers\Exceptions\Transformer as TransformerException;
 
 abstract class Transformer implements TransformerContract, ArrayAccess
 {
-    use HasMedia, HasBlocks, HasTranslation;
+    use HasMedia, HasBlocks, HasTranslation, ClassFinder, HasConfig;
+
+    protected static $recurse = [];
 
     /**
      * @var array
@@ -42,7 +47,9 @@ abstract class Transformer implements TransformerContract, ArrayAccess
 
     function __destruct()
     {
-        $this->removeActiveLocale();
+        $this->restoreActiveLocale();
+
+        $this->resetRecurse();
     }
 
     /**
@@ -90,6 +97,18 @@ abstract class Transformer implements TransformerContract, ArrayAccess
     }
 
     /**
+     * @param string|null $locale
+     */
+    protected function saveActiveLocale(?string $locale): void
+    {
+        $this->oldLocale = locale();
+
+        $this->activeLocale = $locale;
+
+        set_local_locale($locale);
+    }
+
+    /**
      * @return array|null
      */
     public function transform()
@@ -102,19 +121,20 @@ abstract class Transformer implements TransformerContract, ArrayAccess
      */
     protected function makeTemplateName()
     {
-        if (isset($this->data['data']['template_name'])) {
-            return $this->data['data']['template_name'];
-        }
+        return $this->getTemplate();
+    }
 
-        if (isset($this->data['template_name'])) {
-            return $this->data['template_name'];
-        }
-
-        if (isset($this->data['type'])) {
-            return $this->data['type'];
-        }
-
-        return 'home';
+    /**
+     * @return mixed|string
+     */
+    protected function getTemplate()
+    {
+        return $this->templateName ??
+            $this->template_name ??
+            ($this->get('template_name') ??
+                ($this->callMethod('templateName') ??
+                    ($this->config('templates.default') ??
+                        Template::notFound())));
     }
 
     /**
@@ -151,10 +171,12 @@ abstract class Transformer implements TransformerContract, ArrayAccess
             $transformer = $this->findTransformerByMethodName($name);
 
             if (filled($transformer)) {
+                $transformMethod = $this->getTransformMethod();
+
                 return $this->transformerSetDataOrTransmorph(
                     $transformer,
                     $arguments[0] ?? $this,
-                )->transform();
+                )->$transformMethod();
             }
 
             TransformerException::methodNotFound($name);
@@ -195,49 +217,15 @@ abstract class Transformer implements TransformerContract, ArrayAccess
             return null;
         }
 
-        $class = $this->findClass(Str::after($methodName, 'transform'));
+        $class = $this->findTransformerClass(
+            Str::after($methodName, 'transform'),
+        );
 
         if (filled($class)) {
             return (new $class())->setActiveLocale($this);
         }
 
         return null;
-    }
-
-    public function findClass($class)
-    {
-        $split = collect(explode('_', Str::snake($class)))->map(
-            fn($part) => Str::studly($part),
-        );
-
-        $together = collect($split->all()); // clone was not working
-
-        $shifted =
-            $together->first() === 'Block' ? $together->shift() . '\\' : '';
-
-        $together = $shifted . $together->implode('');
-
-        $split = $split->implode('\\');
-
-        if ($this->isReservedWord($split)) {
-            $split .= 'Block';
-        }
-
-        if ($this->isReservedWord($together)) {
-            $together .= 'Block';
-        }
-
-        return $this->getNamespaces()->reduce(function ($keep, $namespace) use (
-            $split,
-            $together
-        ) {
-            $splitName = "{$namespace}\\{$split}";
-            $togetherName = "{$namespace}\\{$together}";
-
-            return $keep ??
-                ((class_exists($togetherName) ? $togetherName : null) ??
-                    (class_exists($splitName) ? $splitName : null));
-        });
     }
 
     /**
@@ -285,11 +273,20 @@ abstract class Transformer implements TransformerContract, ArrayAccess
     }
 
     /**
+     * This method is responsible for retrieving properties from the current Transformer or
+     * any the data object (Model? Block?) stored on it.
+     *
      * @param $name
      * @return array|\Illuminate\Support\Collection|mixed|null
      */
     public function get($name)
     {
+        $data = $this->data ?? $this->block ?? null;
+
+        if (blank($data)) {
+            return null;
+        }
+
         if ($name === 'blocks' && $this instanceof Block) {
             return $this->getBlocks();
         }
@@ -298,44 +295,48 @@ abstract class Transformer implements TransformerContract, ArrayAccess
             return $this->getBrowsers();
         }
 
-        if (is_object($this->data) && property_exists($this->data, $name)) {
-            return $this->data->{$name};
+        while ($data instanceof Transformer) {
+            $data = $data->getData();
+        }
+
+        if (is_object($data) && property_exists($data, $name)) {
+            return $data->{$name};
         }
 
         if (isset($this->{$name})) {
             return $this->{$name};
         }
 
-        if (isset($this->data->{$name})) {
-            return $this->data->{$name};
+        if (isset($data->{$name})) {
+            return $data->{$name};
         }
 
-        if (isset($this->data['data']->{$name})) {
-            return $this->data['data']->{$name};
+        if (isset($data['data']->{$name})) {
+            return $data['data']->{$name};
         }
 
-        if (isset($this->data[$name])) {
-            return $this->data[$name];
+        if (isset($data[$name])) {
+            return $data[$name];
         }
 
         if (isset($this->content[$name])) {
             return $this->content[$name];
         }
 
-        if (isset($this->data['data'][$name])) {
-            return $this->data['data'][$name];
+        if (isset($data['data'][$name])) {
+            return $data['data'][$name];
         }
 
-        if (isset($this->data['data']->$name)) {
-            return $this->data['data']->$name;
+        if (isset($data['data']->$name)) {
+            return $data['data']->$name;
         }
 
-        if (isset($this->data['content'][$name])) {
-            return $this->data['content'][$name];
+        if (isset($data['content'][$name])) {
+            return $data['content'][$name];
         }
 
-        if (isset($this->data['data']['content'][$name])) {
-            return $this->data['data']['content'][$name];
+        if (isset($data['data']['content'][$name])) {
+            return $data['data']['content'][$name];
         }
 
         // Developer may also refer to Twill's Block Model
@@ -343,101 +344,23 @@ abstract class Transformer implements TransformerContract, ArrayAccess
             return $this->block->{$name};
         }
 
-        if (isset($this->data['block'][$name])) {
-            return $this->data['block'][$name];
+        if (isset($data['block'][$name])) {
+            return $data['block'][$name];
         }
 
         return null;
     }
 
-    public function config($path)
-    {
-        return config("twill-transformers.{$path}");
-    }
-
-    public function getNamespaces()
-    {
-        return collect([
-            $this->config('namespaces.app.transformers'),
-            $this->config('namespaces.package.transformers'),
-        ])->filter();
-    }
-
-    public function isReservedWord($word)
-    {
-        return collect(
-            $keywords = [
-                'abstract',
-                'and',
-                'array',
-                'as',
-                'break',
-                'callable',
-                'case',
-                'catch',
-                'class',
-                'clone',
-                'const',
-                'continue',
-                'declare',
-                'default',
-                'die',
-                'do',
-                'echo',
-                'else',
-                'elseif',
-                'empty',
-                'enddeclare',
-                'endfor',
-                'endforeach',
-                'endif',
-                'endswitch',
-                'endwhile',
-                'eval',
-                'exit',
-                'extends',
-                'final',
-                'for',
-                'foreach',
-                'function',
-                'global',
-                'goto',
-                'if',
-                'implements',
-                'include',
-                'include_once',
-                'instanceof',
-                'insteadof',
-                'interface',
-                'isset',
-                'list',
-                'namespace',
-                'new',
-                'or',
-                'print',
-                'private',
-                'protected',
-                'public',
-                'require',
-                'require_once',
-                'return',
-                'static',
-                'switch',
-                'throw',
-                'trait',
-                'try',
-                'unset',
-                'use',
-                'var',
-                'while',
-                'xor',
-            ],
-        )->contains(Str::lower($word));
-    }
-
     public function getData()
     {
         return $this->data;
+    }
+
+    public function getTransformMethod()
+    {
+        return $this->isCallingTransformRecursively()
+            ? 'transformData'
+            : 'transform';
     }
 
     public function transformerSetDataOrTransmorph($transformer, $data)
@@ -466,16 +389,12 @@ abstract class Transformer implements TransformerContract, ArrayAccess
             }
         }
 
-        $this->oldLocale = locale();
-
-        $this->activeLocale = $locale;
-
-        set_local_locale($locale);
+        $this->saveActiveLocale($locale);
 
         return $this;
     }
 
-    protected function removeActiveLocale()
+    protected function restoreActiveLocale()
     {
         if (isset($this->oldLocale)) {
             set_local_locale($this->oldLocale);
@@ -485,5 +404,28 @@ abstract class Transformer implements TransformerContract, ArrayAccess
     protected function setBlockType($data)
     {
         /// implemented on Transformer Block class
+    }
+
+    public function callMethod($name, $parameters = [])
+    {
+        try {
+            return call_user_func_array([$this, $name], $parameters);
+        } catch (\Exception $exception) {
+            return null;
+        }
+    }
+
+    public function resetRecurse()
+    {
+        static::$recurse[__CLASS__] = 0;
+    }
+
+    public function isCallingTransformRecursively()
+    {
+        if (!isset(static::$recurse[__CLASS__])) {
+            static::$recurse[__CLASS__] = 0;
+        }
+
+        return static::$recurse[__CLASS__]++ > 2;
     }
 }

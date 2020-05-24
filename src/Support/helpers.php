@@ -23,6 +23,13 @@ if (!function_exists('_transform')) {
     }
 }
 
+if (!function_exists('locale')) {
+    function locale()
+    {
+        return app()->getLocale();
+    }
+}
+
 if (!function_exists('set_local_locale')) {
     function set_local_locale($locale)
     {

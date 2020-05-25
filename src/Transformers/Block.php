@@ -168,9 +168,12 @@ class Block extends Transformer
 
     protected function transformAndAddType($transformer)
     {
-        // The type of the block may change during transform()
+        // This code must be ran before everything
+        $transformed = $transformer->transform();
+
+        // Because the type of the block may change during transform()
         return ['type' => $transformer->type ?? null] +
-            ($transformer->transform() ?? []);
+            ($transformed ?? []);
     }
 
     protected function setBlockType($data)

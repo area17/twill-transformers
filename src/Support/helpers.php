@@ -1,5 +1,7 @@
 <?php
 
+use A17\Twill\Models\Block;
+use Illuminate\Database\Eloquent\Model;
 use A17\Twill\Models\Block as BlockModel;
 use App\Transformers\Block as BlockTransformer;
 
@@ -15,11 +17,11 @@ if (!function_exists('swap_class')) {
 }
 
 if (!function_exists('_transform')) {
-    function _transform($model)
+    function _transform($block)
     {
-        return $model instanceof BlockModel
-            ? (new BlockTransformer($model))->transform()
-            : $model->transform();
+        return !$block instanceof BlockTransformer
+            ? (new BlockTransformer($block))->transform()
+            : $block->transform();
     }
 }
 
@@ -66,6 +68,18 @@ if (!function_exists('convert_blanks_to_nulls')) {
 if (!function_exists('to_array')) {
     function to_array($collection)
     {
+        if (blank($collection)) {
+            return $collection;
+        }
+        
+        if ($collection instanceof \stdClass) {
+            $collection = collect(json_decode(json_encode($collection), true));
+        }
+
+        if ($collection instanceof Model) {
+            $collection = $collection->toArray();
+        }
+
         if (!is_traversable($collection)) {
             return $collection;
         }

@@ -29,14 +29,9 @@ class Raw extends Block
         $data = collect($block->content)
             ->keys()
             ->mapWithKeys(function ($key) use ($block) {
-                $content = array_key_exists(
-                    locale(),
-                    collect($block->content[$key] ?? [])->toArray(),
-                )
-                    ? $block->content[$key][locale()]
-                    : $block->content[$key] ?? null;
-
-                return [$key => $content];
+                return [
+                    $key => $this->translated($block->content[$key] ?? null),
+                ];
             });
 
         if (filled($block->medias ?? null) && $block->medias->count() > 0) {

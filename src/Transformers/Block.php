@@ -172,8 +172,7 @@ class Block extends Transformer
         $transformed = $transformer->transform();
 
         // Because the type of the block may change during transform()
-        return ['type' => $transformer->type ?? null] +
-            ($transformed ?? []);
+        return ['type' => $transformer->type ?? null] + ($transformed ?? []);
     }
 
     protected function setBlockType($data)

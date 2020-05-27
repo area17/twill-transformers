@@ -130,11 +130,11 @@ abstract class Transformer implements TransformerContract, ArrayAccess
     protected function getTemplate()
     {
         return $this->templateName ??
-            $this->template_name ??
-            ($this->get('template_name') ??
-                ($this->callMethod('templateName') ??
-                    ($this->config('templates.default') ??
-                        Template::notFound())));
+            ($this->template_name ??
+                ($this->get('template_name') ??
+                    ($this->callMethod('templateName') ??
+                        ($this->config('templates.default') ??
+                            Template::notFound()))));
     }
 
     /**
@@ -244,11 +244,11 @@ abstract class Transformer implements TransformerContract, ArrayAccess
     public function offsetExists($offset)
     {
         return property_exists($this, $offset) ||
+            isset(to_array($this->content ?? null)[$offset]) ||
             isset($this->data->{$offset}) ||
             isset($this->data[$offset]) ||
             isset($this->data['data'][$offset]) ||
-            isset($this->content[$offset]) ||
-            isset($this->data['content'][$offset]) ||
+            isset(to_array($this->data['content'] ?? null)[$offset]) ||
             isset($this->data['data'][$offset]) ||
             isset($this->data['data']['content'][$offset]) ||
             isset($this->block->{$offset}) ||
@@ -281,7 +281,16 @@ abstract class Transformer implements TransformerContract, ArrayAccess
      */
     public function get($name)
     {
-        $data = $this->data ?? $this->block ?? null;
+        if (filled($value = $this->getProperty($name))) {
+            $value = is_array($value) ? collect($value) : $value;
+        }
+
+        return $value;
+    }
+
+    public function getProperty($name)
+    {
+        $data = $this->data ?? ($this->block ?? null);
 
         if (blank($data)) {
             return null;
@@ -319,10 +328,6 @@ abstract class Transformer implements TransformerContract, ArrayAccess
             return $data[$name];
         }
 
-        if (isset($this->content[$name])) {
-            return $this->content[$name];
-        }
-
         if (isset($data['data'][$name])) {
             return $data['data'][$name];
         }
@@ -331,12 +336,16 @@ abstract class Transformer implements TransformerContract, ArrayAccess
             return $data['data']->$name;
         }
 
-        if (isset($data['content'][$name])) {
-            return $data['content'][$name];
+        if (isset(to_array($this->content ?? null)[$name])) {
+            return to_array($this->content)[$name];
         }
 
-        if (isset($data['data']['content'][$name])) {
-            return $data['data']['content'][$name];
+        if (isset(to_array($data['content'] ?? null)[$name])) {
+            return to_array($data['content'])[$name];
+        }
+
+        if (isset(to_array($data['data']['content'] ?? null)[$name])) {
+            return to_array($data['data']['content'])[$name];
         }
 
         // Developer may also refer to Twill's Block Model

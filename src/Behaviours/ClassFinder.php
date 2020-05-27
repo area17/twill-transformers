@@ -39,7 +39,9 @@ trait ClassFinder
             $classNames
         ) {
             return $keep ??
-                collect($classNames)->reduce(function ($keep, $class) use ($namespace) {
+                collect($classNames)->reduce(function ($keep, $class) use (
+                    $namespace
+                ) {
                     if ($keep) {
                         return $keep;
                     }

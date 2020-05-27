@@ -15,7 +15,7 @@ trait HasTranslation
             return $source;
         }
 
-        $translated = is_array($source)
+        $translated = is_traversable($source)
             ? $this->getTranslated($source)
             : $this->translatedInput($source, $this->getActiveLocale());
 
@@ -34,15 +34,15 @@ trait HasTranslation
      * @param $text
      * @return array|mixed|string|null
      */
-    function getTranslated($text)
+    function getTranslated($input)
     {
-        if (is_string($text)) {
-            return ___($text, locale());
+        if (is_string($input)) {
+            return ___($input, locale());
         }
 
-        if (is_array($text)) {
-            return $text[$this->getActiveLocale() ?? locale()] ??
-                ($text[fallback_locale()] ?? '');
+        if (is_traversable($input)) {
+            return $input[$this->getActiveLocale() ?? locale()] ??
+                ($input[fallback_locale()] ?? '');
         }
 
         return null;

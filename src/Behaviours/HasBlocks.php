@@ -85,6 +85,8 @@ trait HasBlocks
      */
     protected function getModelFromBrowserName($browserName, $id)
     {
+        $browserName = Str::beforeLast($browserName, ':');
+        
         $class =
             $this->config('namespaces.app.models') .
             '\\' .

@@ -17,11 +17,13 @@ if (!function_exists('swap_class')) {
 }
 
 if (!function_exists('_transform')) {
-    function _transform($block)
+    function _transform($transformer)
     {
-        return !$block instanceof BlockTransformer
-            ? (new BlockTransformer($block))->transform()
-            : $block->transform();
+        if ($transformer instanceof Block) {
+            $transformer = (new BlockTransformer($transformer));
+        }
+
+        return $transformer->transform();
     }
 }
 
@@ -71,7 +73,7 @@ if (!function_exists('to_array')) {
         if (blank($collection)) {
             return $collection;
         }
-        
+
         if ($collection instanceof \stdClass) {
             $collection = collect(json_decode(json_encode($collection), true));
         }

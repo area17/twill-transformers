@@ -14,7 +14,7 @@ class Raw extends Block
     public function transform()
     {
         return [
-            'type' => Str::kebab(Str::camel($this->type)),
+            'type' => $this->transformBlockType($this->type),
 
             'data' => $this->transformRawBlockData($this),
         ];
@@ -64,7 +64,7 @@ class Raw extends Block
             return [];
         }
 
-        $type = Str::plural($blocks->first()->type ?? 'item');
+        $type = $this->transformBlockType(Str::plural($blocks->first()->type ?? 'item'));
 
         $subBlocks = $blocks->map(function ($block) {
             $data = $this->transformBlockContent($block);
@@ -81,5 +81,10 @@ class Raw extends Block
         }
 
         return [];
+    }
+
+    public function transformBlockType($type)
+    {
+        return Str::kebab(Str::camel($type));
     }
 }

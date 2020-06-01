@@ -60,6 +60,12 @@ class Raw extends Block
 
     private function transformSubBlocks(Collection $blocks)
     {
+        if (blank($blocks->first())) {
+            return [];
+        }
+
+        $type = Str::plural($blocks->first()->type ?? 'item');
+
         $subBlocks = $blocks->map(function ($block) {
             $data = $this->transformBlockContent($block);
 
@@ -71,7 +77,7 @@ class Raw extends Block
         });
 
         if (filled($subBlocks)) {
-            return ['items' => $subBlocks];
+            return [$type => $subBlocks];
         }
 
         return [];

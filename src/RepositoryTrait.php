@@ -15,9 +15,14 @@ trait RepositoryTrait
 {
     use ClassFinder, HasConfig;
 
-    public function makeViewData($subject = [])
+    public function makeViewData($data = [])
     {
-        return $this->makeViewDataTransformer($subject)->transform();
+        return $this->makeViewDataTransformer($data)->transform();
+    }
+
+    public function transform($data)
+    {
+        return $this->makeViewData($data);
     }
 
     public function makeViewDataTransformer($subject = [])

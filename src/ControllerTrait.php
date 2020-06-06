@@ -81,4 +81,9 @@ trait ControllerTrait
             ($data['templateName'] ??
                 ($this->templateName ?? ($this->template_name ?? null)));
     }
+
+    protected function previewData($item)
+    {
+        return $this->repository->makeViewData($item);
+    }
 }

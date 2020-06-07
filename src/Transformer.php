@@ -60,12 +60,22 @@ abstract class Transformer implements TransformerContract, ArrayAccess
     }
 
     /**
+     * Sanitize is supposed to be the last thing to be called after
+     * the whole transformation process. So it will also set the
+     * "transformed=true" property.
+     *
      * @param $array
      * @return array
      */
     protected function sanitize($array)
     {
-        return convert_blanks_to_nulls(to_array($array));
+        $sanitized = convert_blanks_to_nulls(to_array($array));
+
+        if (!isset($sanitized['transformed'])) {
+            $sanitized['transformed'] = true;
+        }
+
+        return $sanitized;
     }
 
     /**

@@ -17,8 +17,20 @@ if (!function_exists('swap_class')) {
 }
 
 if (!function_exists('_transform')) {
-    function _transform($transformer)
+    function _transform(...$data)
     {
+        $transformer = $data[0] ?? null;
+
+        if (blank($transformer)) {
+            return null;
+        }
+
+        foreach ($data as $datum) {
+            if (isset($datum['transformed']) && $datum['transformed']) {
+                return $datum;
+            }
+        }
+
         if ($transformer instanceof Block) {
             $transformer = (new BlockTransformer($transformer));
         }

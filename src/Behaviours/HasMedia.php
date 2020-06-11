@@ -12,6 +12,17 @@ use App\Transformers\Media as MediaTransformer;
 trait HasMedia
 {
     /**
+     * @param $object
+     * @return mixed
+     */
+    protected function getFirstTranslatedMedia($object)
+    {
+        return $object->medias->first(function ($media) {
+                return $media->pivot->locale === locale();
+            }) ?? $object->medias->first();
+    }
+
+    /**
      * @param $medias
      * @return \Illuminate\Support\Collection
      */
@@ -197,8 +208,10 @@ trait HasMedia
         return $this->getMediaArray($object, $media);
     }
 
-    protected function getFirstMedia($object)
+    protected function getFirstMedia($object = null)
     {
+        $object ??= $this;
+
         if ($object instanceof MediaModel) {
             return $object;
         }
@@ -216,7 +229,7 @@ trait HasMedia
                 }
             }
 
-            return $object->medias->first();
+            return $this->getFirstTranslatedMedia($object);
         }
 
         return null;
@@ -244,7 +257,7 @@ trait HasMedia
     public function calculateImageRatio($ratio, $image)
     {
         if ($ratio === null) {
-            $image ??= $this->medias->first();
+            $image ??= $this->getFirstTranslatedMedia($this);
 
             $ratio =
                 ($image->pivot->crop_w ?? $image->width) /

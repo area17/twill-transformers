@@ -7,7 +7,7 @@ use Illuminate\Support\Arr;
 use App\Transformers\Transformer;
 use A17\Twill\Models\Media as MediaModel;
 use A17\TwillTransformers\Support\Croppings;
-use App\Transformers\Media as MediaTransformer;
+use A17\TwillTransformers\Transformers\Media as MediaTransformer;
 
 trait HasMedia
 {
@@ -120,7 +120,9 @@ trait HasMedia
         });
 
         if ($this->croppingsWereSelected() ?? false) {
-            return $crops[$this->role][$this->crop];
+            return $crops->map(function ($role, $roleName) {
+                return $role->filter(fn($crop, $cropName) => $cropName == $this->crop);
+            })->filter(fn($role, $roleName) => $roleName == $this->role);
         }
 
         return $crops;

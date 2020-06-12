@@ -40,6 +40,6 @@ class Media extends Transformer
      */
     public function croppingsWereSelected()
     {
-        return filled($this->role);
+        return filled($this->role) || filled($this->crop);
     }
 }

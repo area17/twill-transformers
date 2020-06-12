@@ -4,6 +4,7 @@ namespace A17\TwillTransformers;
 
 use ArrayAccess;
 use Illuminate\Support\Str;
+use Illuminate\Database\Eloquent\Model;
 use A17\TwillTransformers\Transformers\Block;
 use A17\TwillTransformers\Behaviours\HasMedia;
 use A17\TwillTransformers\Exceptions\Template;
@@ -393,13 +394,15 @@ abstract class Transformer implements TransformerContract, ArrayAccess
 
     public function getActiveLocale()
     {
-        return $this->activeLocale ?? fallback_locale();
+        return $this->activeLocale ?? locale();
     }
 
     protected function setActiveLocale($locale)
     {
         if (!is_string($locale)) {
-            if (isset($locale['active_locale'])) {
+            if ($locale instanceof Model && $modelLocale = $locale->getAttributes()['locale'] ?? null) {
+                $locale = $modelLocale;
+            } elseif (isset($locale['active_locale'])) {
                 $locale = $locale['active_locale'];
             } elseif ($locale instanceof Transformer) {
                 $locale = $locale->getActiveLocale();

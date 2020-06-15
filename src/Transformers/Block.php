@@ -132,7 +132,7 @@ class Block extends Transformer
     public function transform()
     {
         if ($result = $this->transformBlockCollection()) {
-            return $result;
+            return $result->filter();
         }
 
         return $this->transformGenericBlock();
@@ -170,6 +170,10 @@ class Block extends Transformer
     {
         // This code must be ran before everything
         $transformed = $transformer->transform();
+
+        if (is_null($transformed)) {
+            return null;
+        }
 
         // Because the type of the block may change during transform()
         return ['type' => $transformer->type ?? null] + ($transformed ?? []);

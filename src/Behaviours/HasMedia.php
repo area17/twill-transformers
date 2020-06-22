@@ -246,7 +246,7 @@ trait HasMedia
         $mediaParams =
             $object instanceof MediaModel
                 ? $this->getMediaParams()
-                : $object->getMediaParams();
+                : ($object->getMediaParams() ?? $this->extractMediaParamsFromModel($object));
 
         return $mediaParams ?? Croppings::BLOCK_EDITOR;
     }
@@ -328,5 +328,18 @@ trait HasMedia
     public function mediaParamsForBlocks()
     {
         return Croppings::BLOCK_EDITOR;
+    }
+
+    public function extractMediaParamsFromModel($object)
+    {
+        if (isset($object['blockable_type'])) {
+            $model = new $object['blockable_type'];
+
+            if (filled($params = $model->mediasParams ?? null)) {
+                return $params;
+            }
+        }
+
+        return null;
     }
 }

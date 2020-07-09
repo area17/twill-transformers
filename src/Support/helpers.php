@@ -32,7 +32,7 @@ if (!function_exists('_transform')) {
         }
 
         if ($transformer instanceof Block) {
-            $transformer = (new BlockTransformer($transformer));
+            $transformer = new BlockTransformer($transformer);
         }
 
         return $transformer->transform();

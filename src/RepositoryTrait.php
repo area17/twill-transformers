@@ -65,7 +65,11 @@ trait RepositoryTrait
 
     protected function getActiveLocale($model)
     {
-        if (filled($model->translations ?? null)) {
+        if (
+            $model instanceof Model &&
+            isset($model->translations) &&
+            filled($model->translations ?? null)
+        ) {
             return $model->translations
                 ->pluck('locale')
                 ->contains($locale = locale())
@@ -78,8 +82,11 @@ trait RepositoryTrait
 
     protected function getTemplateNameFromObject($object)
     {
-        $templateName =
-            isset($object->templateName) ? $object->templateName : (isset($object->template_name) ? $object->template_name : null);
+        $templateName = isset($object->templateName)
+            ? $object->templateName
+            : (isset($object->template_name)
+                ? $object->template_name
+                : null);
 
         if (blank($templateName)) {
             try {

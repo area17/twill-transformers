@@ -64,7 +64,9 @@ class Raw extends Block
             return [];
         }
 
-        $type = $this->transformBlockType(Str::plural($blocks->first()->type ?? 'item'));
+        $type = $this->transformBlockType(
+            Str::plural($blocks->first()->type ?? 'item'),
+        );
 
         $subBlocks = $blocks->map(function ($block) {
             $data = $this->transformBlockContent($block);

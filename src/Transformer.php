@@ -400,7 +400,10 @@ abstract class Transformer implements TransformerContract, ArrayAccess
     protected function setActiveLocale($locale)
     {
         if (!is_string($locale)) {
-            if ($locale instanceof Model && $modelLocale = $locale->getAttributes()['locale'] ?? null) {
+            if (
+                $locale instanceof Model &&
+                ($modelLocale = $locale->getAttributes()['locale'] ?? null)
+            ) {
                 $locale = $modelLocale;
             } elseif (isset($locale['active_locale'])) {
                 $locale = $locale['active_locale'];

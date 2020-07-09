@@ -18,8 +18,8 @@ trait HasMedia
     protected function getFirstTranslatedMedia($object)
     {
         return $object->medias->first(function ($media) {
-                return $media->pivot->locale === locale();
-            }) ?? $object->medias->first();
+            return $media->pivot->locale === locale();
+        }) ?? $object->medias->first();
     }
 
     /**
@@ -120,9 +120,13 @@ trait HasMedia
         });
 
         if ($this->croppingsWereSelected() ?? false) {
-            return $crops->map(function ($role, $roleName) {
-                return $role->filter(fn($crop, $cropName) => $cropName == $this->crop);
-            })->filter(fn($role, $roleName) => $roleName == $this->role);
+            return $crops
+                ->map(function ($role, $roleName) {
+                    return $role->filter(
+                        fn($crop, $cropName) => $cropName == $this->crop,
+                    );
+                })
+                ->filter(fn($role, $roleName) => $roleName == $this->role);
         }
 
         return $crops;
@@ -246,7 +250,8 @@ trait HasMedia
         $mediaParams =
             $object instanceof MediaModel
                 ? $this->getMediaParams()
-                : ($object->getMediaParams() ?? $this->extractMediaParamsFromModel($object));
+                : $object->getMediaParams() ??
+                    $this->extractMediaParamsFromModel($object);
 
         return $mediaParams ?? Croppings::BLOCK_EDITOR;
     }
@@ -333,7 +338,7 @@ trait HasMedia
     public function extractMediaParamsFromModel($object)
     {
         if (isset($object['blockable_type'])) {
-            $model = new $object['blockable_type'];
+            $model = new $object['blockable_type']();
 
             if (filled($params = $model->mediasParams ?? null)) {
                 return $params;

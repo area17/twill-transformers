@@ -79,7 +79,7 @@ trait RepositoryTrait
     protected function getTemplateNameFromObject($object)
     {
         $templateName =
-            $object->templateName ?? ($object->template_name ?? null);
+            isset($object->templateName) ? $object->templateName : (isset($object->template_name) ? $object->template_name : null);
 
         if (blank($templateName)) {
             try {

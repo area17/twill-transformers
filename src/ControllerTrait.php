@@ -86,4 +86,9 @@ trait ControllerTrait
     {
         return $this->repository->makeViewData($item);
     }
+
+    public function notTransformed($data)
+    {
+        return blank(@$data->transformed) && blank(@$data['transformed']);
+    }
 }

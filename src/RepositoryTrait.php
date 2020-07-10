@@ -15,9 +15,9 @@ trait RepositoryTrait
 {
     use ClassFinder, HasConfig;
 
-    public function makeViewData($data = [])
+    public function makeViewData($data = [], $transformerClass = null)
     {
-        return $this->makeViewDataTransformer($data)->transform();
+        return $this->makeViewDataTransformer($data, $transformerClass)->transform();
     }
 
     public function transform($data)
@@ -25,13 +25,13 @@ trait RepositoryTrait
         return $this->makeViewData($data);
     }
 
-    public function makeViewDataTransformer($subject = [])
+    public function makeViewDataTransformer($subject = [], $transformerClass = null)
     {
         if (is_numeric($subject)) {
             $subject = $this->getById($subject);
         }
 
-        $transformer = app($this->getTransformerClass());
+        $transformer = app($transformerClass ?? $this->getTransformerClass());
 
         return $transformer->setData([
             'template_name' =>

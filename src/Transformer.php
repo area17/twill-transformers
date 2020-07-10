@@ -215,6 +215,10 @@ abstract class Transformer implements TransformerContract, ArrayAccess
             return $this->mediaParamsForBlocks();
         }
 
+        if (!is_object($object)) {
+            TransformerException::methodNotFound($name);
+        }
+
         return call_user_func_array([$object, $name], $arguments);
     }
 
@@ -385,6 +389,10 @@ abstract class Transformer implements TransformerContract, ArrayAccess
 
     public function transformerSetDataOrTransmorph($transformer, $data)
     {
+        if ($data === $this) {
+            $data = $this->getData();
+        }
+
         if ($transformer instanceof Block && $data instanceof Block) {
             return swap_class(get_class($data), get_class($transformer), $data);
         }

@@ -15,9 +15,7 @@ trait HasTranslation
             return $source;
         }
 
-        $translated = is_traversable($source)
-            ? $this->getTranslated($source)
-            : $this->translatedInput($source, $this->getActiveLocale());
+        $translated = $this->getTranslated($source);
 
         if (blank($property)) {
             return $translated;

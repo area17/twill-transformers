@@ -377,7 +377,7 @@ abstract class Transformer implements TransformerContract, ArrayAccess
 
     public function getData()
     {
-        return $this->data;
+        return is_null($this->data) && $this->isBlock($this) ? $this : $this->data;
     }
 
     public function getTransformMethod()

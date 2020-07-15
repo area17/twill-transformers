@@ -3,6 +3,7 @@
 namespace A17\TwillTransformers\Behaviours;
 
 use Illuminate\Support\Str;
+use A17\TwillTransformers\Transformers\Block;
 use A17\TwillTransformers\Transformers\Block as BlockTransformer;
 
 trait HasBlocks
@@ -97,7 +98,7 @@ trait HasBlocks
 
     protected function isBlock($element)
     {
-        return isset($element['block']);
+        return $element instanceof Block || isset($element['block']);
     }
 
     protected function isBlockCollection($element)

@@ -17,7 +17,10 @@ trait RepositoryTrait
 
     public function makeViewData($data = [], $transformerClass = null)
     {
-        return $this->makeViewDataTransformer($data, $transformerClass)->transform();
+        return $this->makeViewDataTransformer(
+            $data,
+            $transformerClass,
+        )->transform();
     }
 
     public function transform($data)
@@ -25,8 +28,10 @@ trait RepositoryTrait
         return $this->makeViewData($data);
     }
 
-    public function makeViewDataTransformer($subject = [], $transformerClass = null)
-    {
+    public function makeViewDataTransformer(
+        $subject = [],
+        $transformerClass = null
+    ) {
         if (is_numeric($subject)) {
             $subject = $this->getById($subject);
         }

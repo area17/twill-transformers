@@ -90,7 +90,9 @@ trait ControllerTrait
     public function notTransformed($data)
     {
         $transformed1 = isset($data->transformed) ? $data->transformed : false;
-        $transformed2 = isset($data['transformed']) ? $data['transformed'] : false;
+        $transformed2 = isset($data['transformed'])
+            ? $data['transformed']
+            : false;
 
         return !$transformed1 && !$transformed1;
     }

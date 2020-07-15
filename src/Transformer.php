@@ -319,6 +319,14 @@ abstract class Transformer implements TransformerContract, ArrayAccess
             return $this->getBrowsers();
         }
 
+        if (
+            $name === 'data' &&
+            ($data instanceof Model ||
+                (is_object($data) && !$data instanceof Transformer))
+        ) {
+            return $data;
+        }
+
         while ($data instanceof Transformer) {
             $data = $data->getData();
         }
@@ -327,20 +335,20 @@ abstract class Transformer implements TransformerContract, ArrayAccess
             return $data->{$name};
         }
 
-        if (isset($this->{$name})) {
-            return $this->{$name};
+        if (isset($data->{$name})) {
+            return $data->{$name};
         }
 
         if (isset($data->{$name})) {
             return $data->{$name};
         }
 
-        if (isset($data['data']->{$name})) {
-            return $data['data']->{$name};
-        }
-
         if (isset($data[$name])) {
             return $data[$name];
+        }
+
+        if (isset($data['data']->{$name})) {
+            return $data['data']->{$name};
         }
 
         if (isset($data['data'][$name])) {
@@ -351,8 +359,11 @@ abstract class Transformer implements TransformerContract, ArrayAccess
             return $data['data']->$name;
         }
 
-        if (isset(to_array($this->content ?? null)[$name])) {
-            return to_array($this->content)[$name];
+        if (
+            isset($data->content) &&
+            isset(to_array($data->content ?? null)[$name])
+        ) {
+            return to_array($data->content)[$name];
         }
 
         if (isset(to_array($data['content'] ?? null)[$name])) {
@@ -364,8 +375,8 @@ abstract class Transformer implements TransformerContract, ArrayAccess
         }
 
         // Developer may also refer to Twill's Block Model
-        if (isset($this->block->{$name})) {
-            return $this->block->{$name};
+        if (isset($data->block) && isset($data->block->{$name})) {
+            return $data->block->{$name};
         }
 
         if (isset($data['block'][$name])) {
@@ -377,8 +388,12 @@ abstract class Transformer implements TransformerContract, ArrayAccess
 
     public function getData()
     {
+        $propertyData = $this->getProperty('data');
+
         $data =
-            is_null($this->data) && $this->isBlock($this) ? $this : $this->data;
+            is_null($propertyData) && $this->isBlock($this)
+                ? $this
+                : $propertyData;
 
         return is_array($data) ? collect($data) : $data;
     }

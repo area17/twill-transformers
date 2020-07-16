@@ -322,7 +322,8 @@ abstract class Transformer implements TransformerContract, ArrayAccess
         if (
             $name === 'data' &&
             ($data instanceof Model ||
-                (is_object($data) && !$data instanceof Transformer))
+                (is_object($data) && !$data instanceof Transformer) ||
+                is_traversable($data))
         ) {
             return $data;
         }

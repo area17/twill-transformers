@@ -23,17 +23,6 @@ trait HasMedia
     }
 
     /**
-     * @param $medias
-     * @return \Illuminate\Support\Collection
-     */
-    public function transformImages()
-    {
-        return collect($this->medias)->map(function ($media) {
-            return $this->transformImage($media);
-        });
-    }
-
-    /**
      * @param null $object
      * @param null $role
      * @param null $crop
@@ -48,6 +37,8 @@ trait HasMedia
             $object instanceof MediaModel
                 ? $object
                 : ($object ?? $this)->imageObject($role, $crop),
+            $role,
+            $crop,
         );
     }
 
@@ -96,18 +87,32 @@ trait HasMedia
      * @param null $object
      * @return \Illuminate\Support\Collection
      */
-    public function generateSources($object = null)
-    {
+    public function generateSources(
+        $object = null,
+        $filterRole = null,
+        $filterCrop = null
+    ) {
         $mediaParams = $this->mediaParams($object);
 
         $crops = collect($mediaParams)->map(function ($crops, $roleName) use (
             $mediaParams,
-            $object
+            $object,
+            $filterRole,
+            $filterCrop
         ) {
             return collect($crops)->mapWithKeys(function (
                 $crop,
                 $cropName
-            ) use ($mediaParams, $roleName, $object) {
+            ) use ($mediaParams, $roleName, $object, $filterRole, $filterCrop) {
+                if (filled($filterRole)) {
+                    if (
+                        $roleName !== $filterRole ||
+                        $cropName !== $filterCrop
+                    ) {
+                        return [$cropName => null];
+                    }
+                }
+
                 return [
                     $cropName => $this->generateMediaSourceArray(
                         $roleName,
@@ -203,7 +208,7 @@ trait HasMedia
      * @param $object
      * @return array
      */
-    protected function generateMediaArray($object)
+    protected function generateMediaArray($object, $role = null, $crop = null)
     {
         $media = $this->getFirstMedia($object);
 
@@ -211,7 +216,7 @@ trait HasMedia
             return [];
         }
 
-        return $this->getMediaArray($object, $media);
+        return $this->getMediaArray($object, $media, $role, $crop);
     }
 
     protected function getFirstMedia($object = null)
@@ -247,8 +252,12 @@ trait HasMedia
      */
     public function mediaParams($object = null)
     {
+        if (isset($object->mediaParams)) {
+            return $object->mediaParams;
+        }
+
         $mediaParams =
-            $object instanceof MediaModel
+            blank($object) || $object instanceof MediaModel
                 ? $this->getMediaParams()
                 : $object->getMediaParams() ??
                     $this->extractMediaParamsFromModel($object);
@@ -279,8 +288,12 @@ trait HasMedia
      * @param $media
      * @return array
      */
-    protected function getMediaArray($object, $media)
-    {
+    protected function getMediaArray(
+        $object,
+        $media,
+        $role = null,
+        $crop = null
+    ) {
         return [
             'src' => $this->getMediaRawUrl($media),
             'width' => $media->width,
@@ -288,7 +301,7 @@ trait HasMedia
             'title' => $media->getMetadata('title'),
             'caption' => $media->getMetadata('caption'),
             'alt' => $media->getMetadata('altText'),
-            'sources' => $this->generateSources($object),
+            'sources' => $this->generateSources($object, $role, $crop),
         ];
     }
 

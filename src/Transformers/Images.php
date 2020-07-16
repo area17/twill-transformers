@@ -2,6 +2,8 @@
 
 namespace A17\TwillTransformers\Transformers;
 
+use App\Services\Image\Croppings;
+
 class Images extends Media
 {
     /**
@@ -9,17 +11,19 @@ class Images extends Media
      */
     public function transform()
     {
-        $medias = $this->images ?? ($this->medias ?? []);
+        $medias = $this->medias ?? [];
 
         $role = $this->data['role'] ?? ($this->role ?? null);
 
         $crop = $this->data['crop'] ?? ($this->crop ?? null);
 
-        return $this->filterMediasByRoleAndCrop($this->addMediaParamsToImages($medias), $role, $crop)->map(
-            function ($media) use ($role, $crop) {
-                return $this->transformImage($media, $role, $crop);
-            },
-        );
+        return $this->filterMediasByRoleAndCrop(
+            $this->addMediaParamsToImages($medias),
+            $role,
+            $crop,
+        )->map(function ($media) use ($role, $crop) {
+            return $this->transformImage($media, $role, $crop);
+        });
     }
 
     public function filterMediasByRoleAndCrop($medias, $role, $crop)

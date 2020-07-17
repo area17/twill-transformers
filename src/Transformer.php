@@ -480,4 +480,15 @@ abstract class Transformer implements TransformerContract, ArrayAccess
 
         return static::$recurse[__CLASS__]++ > 2;
     }
+
+    public function set($property, $value)
+    {
+        if (is_object($this->data)) {
+            $this->data->{$property} = $value;
+        }
+
+        if (is_traversable($this->data)) {
+            $this->data[$property] = $value;
+        }
+    }
 }

@@ -17,13 +17,13 @@ class Images extends Media
 
         $crop = $this->data['crop'] ?? ($this->crop ?? null);
 
-        return $this->filterMediasByRoleAndCrop(
+        return $this->mergeCrops($this->filterMediasByRoleAndCrop(
             $this->addMediaParamsToImages($medias),
             $role,
             $crop,
         )->map(function ($media) use ($role, $crop) {
             return $this->transformImage($media, $role, $crop);
-        });
+        }));
     }
 
     public function filterMediasByRoleAndCrop($medias, $role, $crop)
@@ -49,5 +49,25 @@ class Images extends Media
 
             return $media;
         });
+    }
+
+    public function mergeCrops($images)
+    {
+        $result = [];
+
+        $images = array_remove_nulls($images);
+
+        foreach ($images as $image)
+        {
+            if (blank($result[$image['src']] ?? null)) {
+                $result[$image['src']] = $image;
+
+                continue;
+            }
+
+            $result[$image['src']]['sources'] = array_merge_recursive($result[$image['src']]['sources'], $image['sources']);
+        }
+
+        return collect($result)->values();
     }
 }

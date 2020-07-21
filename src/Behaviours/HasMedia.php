@@ -30,8 +30,8 @@ trait HasMedia
      */
     public function transformImage($object = null, $role = null, $crop = null)
     {
-        $role ??= Croppings::FREE_RATIO_ROLE_NAME;
-        $crop ??= Croppings::FREE_RATIO_CROP_NAME;
+        $role ??= $object->pivot->role;
+        $crop ??= $object->pivot->crop;
 
         return $this->generateMediaArray(
             $object instanceof MediaModel

@@ -4,6 +4,7 @@ namespace A17\TwillTransformers\Behaviours;
 
 use ImageService;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Str;
 use App\Transformers\Transformer;
 use A17\Twill\Models\Media as MediaModel;
 use A17\TwillTransformers\Support\Croppings;
@@ -156,14 +157,23 @@ trait HasMedia
                 : $this->imageObject($roleName, $cropName);
 
         return [
-            'src' => $this->getUrlWithCrop($media, $roleName, $cropName),
+            'src' => ($src = $this->getUrlWithCrop(
+                $media,
+                $roleName,
+                $cropName,
+            )),
 
             'ratio' => $this->calculateImageRatio(
                 $mediaParams[$roleName][$cropName]['ratio'] ??
                     ($mediaParams[$roleName][$cropName][0]['ratio'] ?? null),
                 $media,
             ),
-        ];
+        ] +
+            $this->makeExtraParams(
+                $src,
+                $mediaParams[$roleName][$cropName]['extra'] ??
+                    ($mediaParams[$roleName][$cropName][0]['extra'] ?? []),
+            );
     }
 
     /**
@@ -359,5 +369,66 @@ trait HasMedia
         }
 
         return null;
+    }
+
+    public function makeExtraParams($src, $extraParams)
+    {
+        return collect($extraParams)
+            ->map(
+                fn($definitions) => $this->makeExtraParamsString(
+                    $definitions,
+                    $src,
+                ),
+            )
+            ->map(function ($param, $key) use ($extraParams, $src) {
+                $isSpecial = isset($extraParams[$key][0]['__items']);
+
+                return $isSpecial
+                    ? $param
+                    : $this->addParamsToUrl($src, $param);
+            })
+            ->toArray();
+    }
+
+    public function makeExtraParamsString($definitions, $src = null)
+    {
+        return collect($definitions)
+            ->map(
+                fn($definition, $key) => $this->buildParamDefinition(
+                    $definition,
+                    $key,
+                    $src,
+                ),
+            )
+            ->values()
+            ->implode('&');
+    }
+
+    public function buildParamDefinition($definition, $key, $src)
+    {
+        if (isset($definition['__items'])) {
+            return $this->buildParamDefinitionSpecial($definition, $src);
+        }
+
+        return "$key=$definition";
+    }
+
+    public function addParamsToUrl($src, $params)
+    {
+        $glue = Str::contains($src, '?') ? '&' : '?';
+
+        return "{$src}{$glue}{$params}";
+    }
+
+    public function buildParamDefinitionSpecial($definition, $src)
+    {
+        $glue = $definition['__glue'] ?? '&';
+
+        return collect($definition['__items'])
+            ->map(
+                fn($definitions) => $this->makeExtraParamsString($definitions),
+            )
+            ->map(fn($string) => $this->addParamsToUrl($src, $string))
+            ->implode($glue);
     }
 }

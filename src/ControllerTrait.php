@@ -2,6 +2,8 @@
 
 namespace A17\TwillTransformers;
 
+use Illuminate\Support\Arr;
+use Illuminate\Support\Str;
 use A17\TwillTransformers\Behaviours\HasConfig;
 use A17\TwillTransformers\Exceptions\Transformer as TransformerException;
 
@@ -15,7 +17,7 @@ trait ControllerTrait
     public function isJsonResult()
     {
         return (config('app.debug') || app()->environment() !== 'production') &&
-            request()->query('output') === 'json';
+            Str::startsWith(request()->query('output'), 'json');
     }
 
     /**
@@ -28,7 +30,7 @@ trait ControllerTrait
         $data = $this->transform($data, $transformerClass);
 
         if ($this->isJsonResult()) {
-            return $data;
+            return $this->extractJsonData($data);
         }
 
         return view(
@@ -95,5 +97,14 @@ trait ControllerTrait
             : false;
 
         return !$transformed1 && !$transformed1;
+    }
+
+    public function extractJsonData($data)
+    {
+        if (($json = request()->query('output')) === 'json') {
+            return $data;
+        }
+
+        return Arr::get($data, Str::after($json, 'json.'));
     }
 }

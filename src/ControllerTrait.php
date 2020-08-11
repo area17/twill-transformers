@@ -40,7 +40,7 @@ trait ControllerTrait
         );
     }
 
-    protected function transform($data, $transformerClass)
+    protected function transform($data, $transformerClass = null)
     {
         return $this->getTransformer($data, $transformerClass)->transform();
     }

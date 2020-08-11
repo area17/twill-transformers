@@ -47,7 +47,7 @@ class Raw extends Block
      */
     protected function transformRawBlockData(Block $block)
     {
-        if (!is_array($block->content)) {
+        if (!is_traversable($block->content)) {
             return null;
         }
 

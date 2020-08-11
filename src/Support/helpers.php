@@ -117,3 +117,14 @@ if (!function_exists('to_array')) {
         return $collection->toArray();
     }
 }
+
+if (!function_exists('is_traversable')) {
+    /**
+     * @param mixed $subject
+     * @return bool
+     */
+    function is_traversable($subject)
+    {
+        return is_array($subject) || $subject instanceof ArrayAccess;
+    }
+}

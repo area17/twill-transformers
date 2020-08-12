@@ -19,10 +19,12 @@ class Images extends Media
 
         return $this->mergeCrops(
             $this->filterMediasByRoleAndCrop(
-                $this->addMediaParamsToImages($medias),
+                $this->addMediasParamsToImages($medias),
                 $role,
                 $crop,
             )->map(function ($media) use ($role, $crop) {
+                $a = $this->transformImage($media, $role, $crop); // TODO: REMOVE THIS
+
                 return $this->transformImage($media, $role, $crop);
             }),
         );
@@ -44,10 +46,10 @@ class Images extends Media
         });
     }
 
-    public function addMediaParamsToImages($medias)
+    public function addMediasParamsToImages($medias)
     {
         return collect($medias)->map(function ($media) {
-            $media->mediaParams = $this->mediaParams;
+            $media->mediasParams = $this->mediasParams;
 
             return $media;
         });

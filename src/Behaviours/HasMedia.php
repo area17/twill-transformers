@@ -93,37 +93,44 @@ trait HasMedia
         $filterRole = null,
         $filterCrop = null
     ) {
-        $mediaParams = $this->mediaParams($object);
+        $mediasParams = $this->mediasParams($object);
 
-        $crops = collect($mediaParams)->map(function ($crops, $roleName) use (
-            $mediaParams,
-            $object,
-            $filterRole,
-            $filterCrop
-        ) {
-            return collect($crops)->mapWithKeys(function (
-                $crop,
-                $cropName
-            ) use ($mediaParams, $roleName, $object, $filterRole, $filterCrop) {
-                if (filled($filterRole)) {
-                    if (
-                        $roleName !== $filterRole ||
-                        $cropName !== $filterCrop
-                    ) {
-                        return [$cropName => null];
-                    }
-                }
-
-                return [
-                    $cropName => $this->generateMediaSourceArray(
+        $crops = collect($mediasParams)
+            ->map(function ($crops, $roleName) use (
+                $mediasParams,
+                $object,
+                $filterRole,
+                $filterCrop
+            ) {
+                return collect($crops)
+                    ->mapWithKeys(function ($crop, $cropName) use (
+                        $mediasParams,
                         $roleName,
-                        $cropName,
-                        $mediaParams,
-                        $object instanceof MediaModel ? $object : null,
-                    ),
-                ];
-            })->filter();
-        })->filter(fn($ratios) => filled($ratios));
+                        $object,
+                        $filterRole,
+                        $filterCrop
+                    ) {
+                        if (filled($filterRole)) {
+                            if (
+                                $roleName !== $filterRole ||
+                                $cropName !== $filterCrop
+                            ) {
+                                return [$cropName => null];
+                            }
+                        }
+
+                        return [
+                            $cropName => $this->generateMediaSourceArray(
+                                $roleName,
+                                $cropName,
+                                $mediasParams,
+                                $object instanceof MediaModel ? $object : null,
+                            ),
+                        ];
+                    })
+                    ->filter();
+            })
+            ->filter(fn($ratios) => filled($ratios));
 
         if ($this->croppingsWereSelected() ?? false) {
             return $crops
@@ -141,14 +148,14 @@ trait HasMedia
     /**
      * @param $roleName
      * @param $cropName
-     * @param $mediaParams
+     * @param $mediasParams
      * @param null $media
      * @return array
      */
     public function generateMediaSourceArray(
         $roleName,
         $cropName,
-        $mediaParams,
+        $mediasParams,
         $media = null
     ) {
         $media ??=
@@ -156,11 +163,7 @@ trait HasMedia
                 ? $this->data
                 : $this->imageObject($roleName, $cropName);
 
-        $src = ($src = $this->getUrlWithCrop(
-            $media,
-            $roleName,
-            $cropName,
-        ));
+        $src = $src = $this->getUrlWithCrop($media, $roleName, $cropName);
 
         if ($this->isEmptyImageSource($src)) {
             return null;
@@ -170,15 +173,15 @@ trait HasMedia
             'src' => $src,
 
             'ratio' => $this->calculateImageRatio(
-                $mediaParams[$roleName][$cropName]['ratio'] ??
-                    ($mediaParams[$roleName][$cropName][0]['ratio'] ?? null),
+                $mediasParams[$roleName][$cropName]['ratio'] ??
+                    ($mediasParams[$roleName][$cropName][0]['ratio'] ?? null),
                 $media,
             ),
         ] +
             $this->makeExtraParams(
                 $src,
-                $mediaParams[$roleName][$cropName]['extra'] ??
-                    ($mediaParams[$roleName][$cropName][0]['extra'] ?? []),
+                $medisaParams[$roleName][$cropName]['extra'] ??
+                    ($mediasParams[$roleName][$cropName][0]['extra'] ?? []),
             );
     }
 
@@ -216,7 +219,7 @@ trait HasMedia
         return $this->generateMediaSourceArray(
             $roleName,
             $cropName,
-            $this->getMediaParams(),
+            $this->getMediasParams(),
         );
     }
 
@@ -266,19 +269,19 @@ trait HasMedia
      * @param null $object
      * @return mixed
      */
-    public function mediaParams($object = null)
+    public function mediasParams($object = null)
     {
-        if (isset($object->mediaParams)) {
-            return $object->mediaParams;
+        if (filled($object->mediasParams)) {
+            return $object->mediasParams;
         }
 
-        $mediaParams =
+        $mediasParams =
             blank($object) || $object instanceof MediaModel
-                ? $this->getMediaParams()
-                : $object->getMediaParams() ??
-                    $this->extractMediaParamsFromModel($object);
+                ? $this->getMediasParams()
+                : $object->getMediasParams() ??
+                    $this->extractMediasParamsFromModel($object);
 
-        return $mediaParams ?? Croppings::BLOCK_EDITOR;
+        return $mediasParams ?? Croppings::BLOCK_EDITOR;
     }
 
     /**
@@ -334,20 +337,22 @@ trait HasMedia
         $roleName,
         $cropName
     ) {
-        $mediaParams = $this->mediaParams($object);
+        $mediasParams = $this->mediasParams($object);
 
         $crops = $this->generateMediaSourceArray(
             $roleName,
             $cropName,
-            $mediaParams,
+            $mediasParams,
             $media,
         );
 
-        $sources = filled($crops) ? [
-            $roleName => [
-                $cropName => $crops,
-            ],
-        ] : null;
+        $sources = filled($crops)
+            ? [
+                $roleName => [
+                    $cropName => $crops,
+                ],
+            ]
+            : null;
 
         return [
             'src' => $this->getMediaRawUrl($media),
@@ -363,12 +368,12 @@ trait HasMedia
     /**
      * @return array
      */
-    public function mediaParamsForBlocks()
+    public function mediasParamsForBlocks()
     {
         return Croppings::BLOCK_EDITOR;
     }
 
-    public function extractMediaParamsFromModel($object)
+    public function extractMediasParamsFromModel($object)
     {
         if (isset($object['blockable_type'])) {
             $model = new $object['blockable_type']();
@@ -444,6 +449,7 @@ trait HasMedia
 
     public function isEmptyImageSource($src)
     {
-        return $src == 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+        return $src ==
+            'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
     }
 }

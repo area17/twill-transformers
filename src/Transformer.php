@@ -200,6 +200,8 @@ abstract class Transformer implements TransformerContract, ArrayAccess
     {
         if (method_exists($this->data, $name)) {
             $object = $this->data;
+        } elseif (method_exists($this->data['data'] ?? null, $name)) {
+            $object = $this->data['data'];
         } elseif (is_array($this->data) && isset($this->data['data'])) {
             $object = $this->data['data'];
         } elseif (isset($this->data['block'])) {
@@ -209,10 +211,10 @@ abstract class Transformer implements TransformerContract, ArrayAccess
         }
 
         if (
-            $name === 'getMediaParams' &&
+            $name === 'getMediasParams' &&
             $object instanceof \A17\Twill\Models\Block
         ) {
-            return $this->mediaParamsForBlocks();
+            return $this->mediasParamsForBlocks();
         }
 
         if (!is_object($object)) {
@@ -348,11 +350,11 @@ abstract class Transformer implements TransformerContract, ArrayAccess
             return $data[$name];
         }
 
-        if (isset($data['data']->{$name})) {
+        if (filled($data['data']->{$name} ?? null)) {
             return $data['data']->{$name};
         }
 
-        if (isset($data['data'][$name])) {
+        if (filled($data['data'][$name] ?? null)) {
             return $data['data'][$name];
         }
 

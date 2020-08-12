@@ -122,8 +122,8 @@ trait HasMedia
                         $object instanceof MediaModel ? $object : null,
                     ),
                 ];
-            });
-        });
+            })->filter();
+        })->filter(fn($ratios) => filled($ratios));
 
         if ($this->croppingsWereSelected() ?? false) {
             return $crops
@@ -156,12 +156,18 @@ trait HasMedia
                 ? $this->data
                 : $this->imageObject($roleName, $cropName);
 
+        $src = ($src = $this->getUrlWithCrop(
+            $media,
+            $roleName,
+            $cropName,
+        ));
+
+        if ($this->isEmptyImageSource($src)) {
+            return null;
+        }
+
         return [
-            'src' => ($src = $this->getUrlWithCrop(
-                $media,
-                $roleName,
-                $cropName,
-            )),
+            'src' => $src,
 
             'ratio' => $this->calculateImageRatio(
                 $mediaParams[$roleName][$cropName]['ratio'] ??
@@ -330,6 +336,19 @@ trait HasMedia
     ) {
         $mediaParams = $this->mediaParams($object);
 
+        $crops = $this->generateMediaSourceArray(
+            $roleName,
+            $cropName,
+            $mediaParams,
+            $media,
+        );
+
+        $sources = filled($crops) ? [
+            $roleName => [
+                $cropName => $crops,
+            ],
+        ] : null;
+
         return [
             'src' => $this->getMediaRawUrl($media),
             'width' => $media->width,
@@ -337,16 +356,7 @@ trait HasMedia
             'title' => $media->getMetadata('title'),
             'caption' => $media->getMetadata('caption'),
             'alt' => $media->getMetadata('altText'),
-            'sources' => [
-                $roleName => [
-                    $cropName => $this->generateMediaSourceArray(
-                        $roleName,
-                        $cropName,
-                        $mediaParams,
-                        $media,
-                    ),
-                ],
-            ],
+            'sources' => $sources,
         ];
     }
 
@@ -430,5 +440,10 @@ trait HasMedia
             )
             ->map(fn($string) => $this->addParamsToUrl($src, $string))
             ->implode($glue);
+    }
+
+    public function isEmptyImageSource($src)
+    {
+        return $src == 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
     }
 }

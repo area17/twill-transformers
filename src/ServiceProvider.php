@@ -53,8 +53,8 @@ class ServiceProvider extends IlluminateServiceProvider
     protected function getBlockList()
     {
         return collect(
-            config('twill.block_editor.blocks') +
-                config('twill.block_editor.repeaters'),
+            config('twill.block_editor.blocks') ?? [] +
+                config('twill.block_editor.repeaters') ?? [],
         );
     }
 

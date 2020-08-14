@@ -39,4 +39,11 @@ class Transformer extends \Exception
             "Transformer or transformer method not found: '$method()'",
         );
     }
+
+    public static function dataNotTransformed($class)
+    {
+        throw new self(
+            "Data was not transformed on class '$class', maybe a transformer was not available on the repository or not passed as argument.",
+        );
+    }
 }

@@ -4,7 +4,10 @@ namespace A17\TwillTransformers;
 
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
+use App\Exceptions\MissingTransformer;
+use App\Exceptions\MissingRepositoryClass;
 use A17\TwillTransformers\Behaviours\HasConfig;
+use A17\TwillTransformers\Exceptions\Repository;
 use A17\TwillTransformers\Exceptions\Transformer as TransformerException;
 
 trait ControllerTrait
@@ -27,19 +30,44 @@ trait ControllerTrait
      */
     public function view($data = null, $view = null, $transformerClass = null)
     {
-        $data = $this->transform($data, $transformerClass);
+        if (!isset($this->repositoryClass) && !isset($transformerClass)) {
+            Repository::missingClass(__CLASS__);
+        }
+
+        $data = $this->viewData($data, $transformerClass);
 
         if ($this->isJsonResult()) {
             return $this->extractJsonData($data);
         }
 
         return view(
-            $this->makeView(
-                $view,
-                $this->getTransformer($data, $transformerClass)->getData(),
-            ),
-            $data,
+            $view ?? ($data['template_name'] ?? 'front.template'),
+            $data
         );
+    }
+
+    public function viewData($data = null, $transformerClass =  null)
+    {
+        $data =
+            isset($this->repositoryClass) && $this->notTransformed($data)
+                ? app($this->repositoryClass)->makeViewData(
+                $data,
+                $transformerClass
+            )
+                : $data;
+
+        if (
+            (blank($data) || !$this->notTransformed($data)) &&
+            filled($transformerClass)
+        ) {
+            $data = app($transformerClass)
+                ->setData($data)
+                ->transform();
+        } elseif (blank($data)) {
+            Transformer::dataNotTransformed(__CLASS__);
+        }
+
+        return $data;
     }
 
     protected function transform($data, $transformerClass = null)

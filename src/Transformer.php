@@ -398,7 +398,18 @@ abstract class Transformer implements TransformerContract, ArrayAccess
                 ? $this
                 : $propertyData;
 
+        $this->absorbBlockInternalData($this, $data);
+
         return is_array($data) ? collect($data) : $data;
+    }
+
+    public function absorbBlockInternalData($block, &$data)
+    {
+        if ($this->isBlock($block)) {
+            foreach ($block->getInternalVars() as $key => $content) {
+                $data[$key] = $content;
+            }
+        }
     }
 
     public function getTransformMethod()

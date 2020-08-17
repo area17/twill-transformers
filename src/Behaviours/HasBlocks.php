@@ -37,6 +37,7 @@ trait HasBlocks
                 $block->pushBlocks(
                     $this->organizeBlocks($block->block->id, $allBlocks),
                 );
+
                 return $block;
             });
     }
@@ -47,13 +48,15 @@ trait HasBlocks
      */
     protected function renderBrowsers($blockModel)
     {
-        $models = [];
+        $models = collect();
+
+        $browsers = $blockModel->content['browsers'] ?? [];
 
         foreach (
-            $blockModel->content['browsers'] ?? []
+            $browsers
             as $browserRelation => $ids
         ) {
-            $models[$browserRelation] = $models[$browserRelation] ?? collect();
+            $models[$browserRelation] = collect($models[$browserRelation] ?? []);
 
             foreach ($ids as $id) {
                 $models[$browserRelation]->push(

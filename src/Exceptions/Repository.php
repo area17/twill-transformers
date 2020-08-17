@@ -11,7 +11,7 @@ class Repository extends \Exception
     public static function missingClass($class)
     {
         throw new self(
-            "The property \$repository_class is missing from class '$class', and a transformer was also not passed as parameter."
+            "The property \$repository_class is missing from class '$class', and a transformer was also not passed as parameter.",
         );
     }
 }

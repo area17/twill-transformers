@@ -6,6 +6,7 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 use App\Exceptions\MissingTransformer;
 use App\Exceptions\MissingRepositoryClass;
+use A17\TwillTransformers\Exceptions\View;
 use A17\TwillTransformers\Behaviours\HasConfig;
 use A17\TwillTransformers\Exceptions\Repository;
 use A17\TwillTransformers\Exceptions\Transformer as TransformerException;
@@ -21,6 +22,26 @@ trait ControllerTrait
     {
         return (config('app.debug') || app()->environment() !== 'production') &&
             Str::startsWith(request()->query('output'), 'json');
+    }
+
+    /**
+     * @param $view
+     * @param $data
+     * @return string|null
+     */
+    protected function makeViewName($view, $data)
+    {
+        $view =
+            $view ??
+            ($data['layout_name'] ??
+                ($this->layoutName ??
+                    ($data['template_name'] ?? ($this->templateName ?? null))));
+
+        if (filled($view)) {
+            return $view;
+        }
+
+        View::missing();
     }
 
     /**
@@ -40,20 +61,17 @@ trait ControllerTrait
             return $this->extractJsonData($data);
         }
 
-        return view(
-            $view ?? ($data['layout_name'] ?? 'front.layout'),
-            $data
-        );
+        return view($this->makeViewName($view, $data), $data);
     }
 
-    public function viewData($data = null, $transformerClass =  null)
+    public function viewData($data = null, $transformerClass = null)
     {
         $data =
             isset($this->repositoryClass) && $this->notTransformed($data)
                 ? app($this->repositoryClass)->makeViewData(
-                $data,
-                $transformerClass
-            )
+                    $data,
+                    $transformerClass,
+                )
                 : $data;
 
         if (

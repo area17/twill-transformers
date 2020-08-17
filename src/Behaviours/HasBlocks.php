@@ -15,6 +15,10 @@ trait HasBlocks
      */
     protected function organizeBlocks($rootBlockId, $allBlocks)
     {
+        if (blank($allBlocks)) {
+            return collect();
+        }
+
         return $allBlocks
             ->where('parent_id', $rootBlockId)
             ->map(function ($blockModel) use ($allBlocks) {

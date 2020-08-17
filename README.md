@@ -109,7 +109,7 @@ class LandingPage extends Transformer
 
 ### Create block transformers  
 
-Note that this is only required if your blocks are not compatible witht the FE data needs. In order to reuse Twill blocks, BE and FE must agree on the strucutre and naming of all blocks. But, if you still have data transformation to be done on a block, you can create blocks as this: 
+Note that this is only required if your blocks are not compatible with the FE data needs. In order to reuse Twill blocks, BE and FE must agree on the structure and naming of all blocks. But, if you still have data transformation to be done on a block, you can create blocks as this: 
 
 ``` php
 namespace App\Transformers\Block;
@@ -144,7 +144,7 @@ class ArtistPortrait extends Block
 
 ### Reuse blocks as components  
 
-If you have a block transformer and needs to reuse it to generate data on your App transformers, or even other block tranformers, you can basicaly call them this way:
+If you have a block transformer and needs to reuse it to generate data on your App transformers, or even other block transformers, you can basically call them this way:
 
 ``` php
 public function transformArtistPortraits($portraits)
@@ -190,7 +190,7 @@ class ArtistPortrait extends Block
 }
 ```
 
-Note that the data (a model, an array, an object) passed to to your transformer (block or app transformer) can be accessed using `$this` from inside your block:
+Note that the data (a model, an array, an object) passed to your transformer (block or app transformer) can be accessed using `$this` from inside your block:
 
 So, when we call a transformer like this: 
 
@@ -198,7 +198,7 @@ So, when we call a transformer like this:
 $this->transformBlockArtistPortrait($portrait);
 ```
 
-Inside the tranformer, we can render images just by doing:
+Inside the transformer, we can render images just by doing:
 
 ``` php
 $this->transformMedia()
@@ -226,7 +226,7 @@ And if you need to take a look at the generated data, you just have to add `?out
 
 ### Rendering previews on Twill
 
-Previews are includeod, they are basically a `side effect` of this new approach, so you just have to configure your preview path on `twill.php` file:
+Previews are included, they are basically a `side effect` of this new approach, so you just have to configure your preview path on `twill.php` file:
  
 ``` php
 'views_path' => 'admin._site.front',
@@ -250,7 +250,7 @@ And create this Blade template to your render previews for everything:
 
 First, you need to have a block component for every block you render, even if it's only extending a base component from your app. 
 
-Then you just need to create this view, tha will handle and render all blocls on the editor:
+Then you just need to create this view, that will handle and render all blocks in the editor:
 
 ``` php
 @php
@@ -262,7 +262,7 @@ Then you just need to create this view, tha will handle and render all blocls on
 @include("components.block.{$type}.block-{$type}", $transformed)
 ```
 
-## Change log
+## Changelog
 
 Please see [CHANGELOG](CHANGELOG.md) for more information on what has changed recently.
 
@@ -278,7 +278,7 @@ Please see [CONTRIBUTING](CONTRIBUTING.md) and [CODE_OF_CONDUCT](CODE_OF_CONDUCT
 
 ## Security
 
-If you discover any security related issues, please email antonio@area17.com instead of using the issue tracker.
+If you discover any security-related issues, please email antonio@area17.com instead of using the issue tracker.
 
 ## Credits
 

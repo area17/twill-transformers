@@ -41,7 +41,7 @@ trait ControllerTrait
         }
 
         return view(
-            $view ?? ($data['template_name'] ?? 'front.template'),
+            $view ?? ($data['layout_name'] ?? 'front.layout'),
             $data
         );
     }
@@ -57,7 +57,7 @@ trait ControllerTrait
                 : $data;
 
         if (
-            (blank($data) || !$this->notTransformed($data)) &&
+            (blank($data) || $this->notTransformed($data)) &&
             filled($transformerClass)
         ) {
             $data = app($transformerClass)

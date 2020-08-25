@@ -43,6 +43,7 @@ trait RepositoryTrait
                 $this->getTemplateName($subject, $transformer) ?? null,
             'type' => $this->getRepositoryType(),
             'data' => $subject,
+            'global' => $this->generateGlobalData(),
             'active_locale' => $this->getActiveLocale($subject),
         ]);
     }
@@ -149,5 +150,14 @@ trait RepositoryTrait
             ->beforeLast('Repository');
 
         return $this->findTransformerClass($class);
+    }
+
+    public function generateGlobalData()
+    {
+        if (method_exists($this, 'makeGlobalData')) {
+            return $this->makeGlobalData();
+        }
+
+        return [];
     }
 }

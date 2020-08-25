@@ -3,7 +3,9 @@
 use A17\Twill\Models\Block;
 use Illuminate\Database\Eloquent\Model;
 use A17\Twill\Models\Block as BlockModel;
-use App\Transformers\Block as BlockTransformer;
+use App\Transformers\Block as BlockBlockTransformer;
+use App\Transformers\Block\Block as BlockTransformer;
+use A17\TwillTransformers\Exceptions\Block as BlockException;
 
 if (!function_exists('swap_class')) {
     function swap_class($original, $new, $object)
@@ -31,8 +33,19 @@ if (!function_exists('_transform')) {
             }
         }
 
-        if ($transformer instanceof Block) {
-            $transformer = new BlockTransformer($transformer);
+        if (
+            $transformer instanceof Block ||
+            (is_array($transformer) &&
+                isset($transformer['blocks']) &&
+                isset($transformer['type']))
+        ) {
+            if (@class_exists(BlockBlockTransformer::class)) {
+                $transformer = new BlockBlockTransformer($transformer);
+            } elseif (@class_exists(BlockTransformer::class)) {
+                $transformer = new BlockTransformer($transformer);
+            } else {
+                BlockException::appRootBlockTransformerNotFound();
+            }
         }
 
         return $transformer->transform();

@@ -52,11 +52,10 @@ trait HasBlocks
 
         $browsers = $blockModel->content['browsers'] ?? [];
 
-        foreach (
-            $browsers
-            as $browserRelation => $ids
-        ) {
-            $models[$browserRelation] = collect($models[$browserRelation] ?? []);
+        foreach ($browsers as $browserRelation => $ids) {
+            $models[$browserRelation] = collect(
+                $models[$browserRelation] ?? [],
+            );
 
             foreach ($ids as $id) {
                 $models[$browserRelation]->push(

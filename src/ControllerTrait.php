@@ -135,14 +135,15 @@ trait ControllerTrait
         return $this->repository->makeViewData($item);
     }
 
+    public function transformed($data)
+    {
+        return (isset($data->transformed) ? $data->transformed : false) ||
+            (isset($data['transformed']) ? $data['transformed'] : false);
+    }
+
     public function notTransformed($data)
     {
-        $transformed1 = isset($data->transformed) ? $data->transformed : false;
-        $transformed2 = isset($data['transformed'])
-            ? $data['transformed']
-            : false;
-
-        return !$transformed1 && !$transformed1;
+        return !$this->transformed($data);
     }
 
     public function extractJsonData($data)

@@ -69,7 +69,7 @@ class Images extends Media
             }
 
             $result[$image['src']]['sources'] = array_merge_recursive(
-                $result[$image['src']]['sources'],
+                $result[$image['src']]['sources'] ?? [],
                 $image['sources'],
             );
         }

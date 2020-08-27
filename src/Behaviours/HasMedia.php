@@ -271,8 +271,12 @@ trait HasMedia
      */
     public function mediasParams($object = null)
     {
-        if (filled($object->mediasParams)) {
+        if (filled($object->mediasParams ?? null)) {
             return $object->mediasParams;
+        }
+
+        if (filled($this->mediasParams ?? null)) {
+            return $this->mediasParams;
         }
 
         $mediasParams =

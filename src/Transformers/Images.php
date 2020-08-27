@@ -23,8 +23,6 @@ class Images extends Media
                 $role,
                 $crop,
             )->map(function ($media) use ($role, $crop) {
-                $a = $this->transformImage($media, $role, $crop); // TODO: REMOVE THIS
-
                 return $this->transformImage($media, $role, $crop);
             }),
         );

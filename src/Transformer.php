@@ -407,7 +407,9 @@ abstract class Transformer implements TransformerContract, ArrayAccess
     {
         if ($this->isBlock($block)) {
             foreach ($block->getInternalVars() as $key => $content) {
-                $data[$key] = $content;
+                if (blank($data[$key] ?? null)) {
+                    $data[$key] = $content;
+                }
             }
         }
     }

@@ -55,8 +55,13 @@ trait HasPagination
      */
     public function buildUrlWithPage($page)
     {
-        return $this->currentUrl(['page' => $page]);
+        return $this->currentUrl(['page' => $page], false); /// keep the query
     }
+
+    /**
+     * @return string
+     */
+    abstract public function currentUrl($options = [], $clearQuery = true);
 
     /**
      * @return |null

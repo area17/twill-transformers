@@ -11,6 +11,10 @@ trait HasTranslation
      */
     protected function translated($source, $property = null)
     {
+        if (is_json($source)) {
+            $source = json_decode($source, true);
+        }
+
         if (is_string($source)) {
             return $source;
         }

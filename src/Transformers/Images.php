@@ -36,12 +36,14 @@ class Images extends Media
             return $medias;
         }
 
-        return $medias->filter(function ($media) use ($role, $crop) {
+        $medias = $medias->filter(function ($media) use ($role, $crop) {
             return blank($media->pivot ?? null)
                 ? false
                 : (blank($role) || $media->pivot->role === $role) &&
                         (blank($crop) || $media->pivot->crop === $crop);
         });
+
+        return $this->unique($medias);
     }
 
     public function addMediasParamsToImages($medias)
@@ -73,5 +75,15 @@ class Images extends Media
         }
 
         return collect($result)->values();
+    }
+
+    protected function unique($medias)
+    {
+        return $medias->unique(
+            fn($media) => $media->pivot->media_id .
+                $media->pivot->mediable_type .
+                $media->pivot->crop .
+                $media->pivot->role,
+        );
     }
 }

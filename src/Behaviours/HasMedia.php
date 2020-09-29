@@ -172,6 +172,14 @@ trait HasMedia
         return [
             'src' => $src,
 
+            'crop_x' => $media->pivot->crop_x,
+
+            'crop_y' => $media->pivot->crop_y,
+
+            'crop_w' => $media->pivot->crop_w,
+
+            'crop_h' => $media->pivot->crop_h,
+
             'ratio' => $this->calculateImageRatio(
                 $mediasParams[$roleName][$cropName]['ratio'] ??
                     ($mediasParams[$roleName][$cropName][0]['ratio'] ?? null),

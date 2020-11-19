@@ -141,3 +141,14 @@ if (!function_exists('is_traversable')) {
         return is_array($subject) || $subject instanceof ArrayAccess;
     }
 }
+
+if (!function_exists('keys_are_all_numeric')) {
+    function keys_are_all_numeric($array)
+    {
+        return collect($array)
+            ->keys()
+            ->reduce(function ($keep, $key) {
+                return $keep && is_integer($key);
+            }, true);
+    }
+}

@@ -152,3 +152,22 @@ if (!function_exists('keys_are_all_numeric')) {
             }, true);
     }
 }
+
+if (!function_exists('array_remove_nulls')) {
+    function array_remove_nulls(&$array)
+    {
+        $array = to_array($array);
+
+        foreach ($array as $key => &$value) {
+            if (is_array($value)) {
+                $value = array_remove_nulls($value);
+            }
+
+            if (is_null($value) || (is_array($value) && count($value) === 0)) {
+                unset($array[$key]);
+            }
+        }
+
+        return $array;
+    }
+}

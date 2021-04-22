@@ -53,8 +53,6 @@ trait RepositoryTrait
      */
     public function getTemplateName(...$objects)
     {
-        $objects[] = $this;
-
         return collect($objects)->reduce(
             fn($name, $object) => $name ??
                 $this->getTemplateNameFromObject($object),

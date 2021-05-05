@@ -1,6 +1,7 @@
 <?php
 
 use A17\Twill\Models\Block;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Database\Eloquent\Model;
 use A17\Twill\Models\Block as BlockModel;
 use App\Transformers\Block as BlockBlockTransformer;
@@ -169,5 +170,14 @@ if (!function_exists('array_remove_nulls')) {
         }
 
         return $array;
+    }
+}
+
+if (!function_exists('_rf')) {
+    function _rf($name, $parameters = [], $absolute = true)
+    {
+        URL::forceRootUrl(config('app.url'));
+
+        return route("front.$name", $parameters, $absolute);
     }
 }

@@ -33,9 +33,12 @@ trait ControllerTrait
     {
         $view =
             $view ??
-            ($data['layout_name'] ??
-                ($this->layoutName ??
-                    ($data['template_name'] ?? ($this->templateName ?? null))));
+            $data['layout_name'] ??
+            $this->layoutName ??
+            $data['template_name'] ??
+            $this->templateName ??
+            $this->getViewFromRepository() ??
+            null;
 
         if (filled($view)) {
             return $view;
@@ -153,5 +156,14 @@ trait ControllerTrait
         }
 
         return Arr::get($data, Str::after($json, 'json.'));
+    }
+
+    public function getViewFromRepository()
+    {
+        if (!isset($this->repositoryClass)) {
+            return null;
+        }
+
+        return app($this->repositoryClass)->getTemplateName();
     }
 }

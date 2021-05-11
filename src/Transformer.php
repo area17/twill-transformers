@@ -184,10 +184,16 @@ abstract class Transformer implements TransformerContract, ArrayAccess
             if (filled($transformer)) {
                 $transformMethod = $this->getTransformMethod();
 
-                return $this->transformerSetDataOrTransmorph(
+                static::incrementTransformCalls();
+
+                $transformed = $this->transformerSetDataOrTransmorph(
                     $transformer,
                     $arguments[0] ?? $this,
                 )->$transformMethod();
+
+                static::dencrementTransformCalls();
+
+                return $transformed;
             }
 
             TransformerException::methodNotFound($name);
@@ -484,16 +490,30 @@ abstract class Transformer implements TransformerContract, ArrayAccess
 
     public function resetRecurse()
     {
-        static::$recurse[__CLASS__] = 0;
+        static::$recurse[get_class($this)] = 0;
+    }
+
+    public function incrementTransformCalls()
+    {
+        if (!isset(static::$recurse[get_class($this)])) {
+            static::$recurse[get_class($this)] = 0;
+        }
+
+        static::$recurse[get_class($this)]++;
+    }
+
+    public function dencrementTransformCalls()
+    {
+        if (!isset(static::$recurse[get_class($this)])) {
+            static::$recurse[get_class($this)] = 0;
+        }
+
+        static::$recurse[get_class($this)]--;
     }
 
     public function isCallingTransformRecursively()
     {
-        if (!isset(static::$recurse[__CLASS__])) {
-            static::$recurse[__CLASS__] = 0;
-        }
-
-        return static::$recurse[__CLASS__]++ > 2;
+        return static::$recurse[get_class($this)] ?? 0 > 3;
     }
 
     public function set($property, $value)

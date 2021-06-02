@@ -171,3 +171,14 @@ if (!function_exists('array_remove_nulls')) {
         return $array;
     }
 }
+
+if (!function_exists('is_json')) {
+    function is_json($string)
+    {
+        if (!is_string($string)) {
+            return false;
+        }
+
+        return is_array(json_decode($string, true));
+    }
+}

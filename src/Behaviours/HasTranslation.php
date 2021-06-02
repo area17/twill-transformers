@@ -15,7 +15,7 @@ trait HasTranslation
             $source = json_decode($source, true);
         }
 
-        if (is_string($source)) {
+        if (!is_traversable($source)) {
             return $source;
         }
 

@@ -172,12 +172,3 @@ if (!function_exists('array_remove_nulls')) {
         return $array;
     }
 }
-
-if (!function_exists('_rf')) {
-    function _rf($name, $parameters = [], $absolute = true)
-    {
-        URL::forceRootUrl(config('app.url'));
-
-        return route("front.$name", $parameters, $absolute);
-    }
-}

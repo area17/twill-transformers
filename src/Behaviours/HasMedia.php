@@ -8,6 +8,7 @@ use Illuminate\Support\Str;
 use App\Transformers\Transformer;
 use A17\Twill\Models\Media as MediaModel;
 use A17\TwillTransformers\Support\Croppings;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use A17\TwillTransformers\Transformers\Media as MediaTransformer;
 
 trait HasMedia
@@ -388,7 +389,9 @@ trait HasMedia
     public function extractMediasParamsFromModel($object)
     {
         if (isset($object['blockable_type'])) {
-            $model = new $object['blockable_type']();
+            $class = $this->getBlockableTypeClass($object);
+
+            $model = new $class();
 
             if (filled($params = $model->mediasParams ?? null)) {
                 return $params;
@@ -463,5 +466,16 @@ trait HasMedia
     {
         return $src ==
             'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+    }
+
+    public function getBlockableTypeClass($object)
+    {
+        $class = $object['blockable_type'];
+
+        if (!class_exists($class)) {
+            return Relation::getMorphedModel($class);
+        }
+
+        return $class;
     }
 }

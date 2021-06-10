@@ -43,7 +43,7 @@ abstract class Transformer implements TransformerContract, ArrayAccess
 
     public function __construct($data = null)
     {
-        if (method_exists($data, 'getGlobalMediaParams')) {
+        if (is_object($data) && method_exists($data, 'getGlobalMediaParams')) {
             $this->setGlobalMediaParams($data->getGlobalMediaParams());
         }
 

@@ -43,6 +43,10 @@ abstract class Transformer implements TransformerContract, ArrayAccess
 
     public function __construct($data = null)
     {
+        if (method_exists($data, 'getGlobalMediaParams')) {
+            $this->setGlobalMediaParams($data->getGlobalMediaParams());
+        }
+
         $this->setData($data);
     }
 
@@ -206,7 +210,10 @@ abstract class Transformer implements TransformerContract, ArrayAccess
     {
         if (filled($this->data ?? null) && method_exists($this->data, $name)) {
             $object = $this->data;
-        } elseif (filled($this->data['data'] ?? null) && method_exists($this->data['data'], $name)) {
+        } elseif (
+            filled($this->data['data'] ?? null) &&
+            method_exists($this->data['data'], $name)
+        ) {
             $object = $this->data['data'];
         } elseif (is_array($this->data) && isset($this->data['data'])) {
             $object = $this->data['data'];
@@ -245,7 +252,9 @@ abstract class Transformer implements TransformerContract, ArrayAccess
         );
 
         if (filled($class)) {
-            return (new $class())->setActiveLocale($this);
+            return (new $class())
+                ->setActiveLocale($this)
+                ->setGlobalMediaParams($this->getGlobalMediaParams());
         }
 
         return null;

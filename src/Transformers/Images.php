@@ -79,13 +79,13 @@ class Images extends Media
 
     protected function unique($medias)
     {
-        return $medias->sortBy(
-            fn($media) => $media->pivot->locale === locale() ? 0 : 1,
-        )->unique(
-            fn($media) => $media->pivot->media_id .
-                $media->pivot->mediable_type .
-                $media->pivot->crop .
-                $media->pivot->role,
-        );
+        return $medias
+            ->sortBy(fn($media) => $media->pivot->locale === locale() ? 0 : 1)
+            ->unique(
+                fn($media) => $media->pivot->media_id .
+                    $media->pivot->mediable_type .
+                    $media->pivot->crop .
+                    $media->pivot->role,
+            );
     }
 }

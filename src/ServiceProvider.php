@@ -54,7 +54,7 @@ class ServiceProvider extends IlluminateServiceProvider
     {
         return collect(
             config('twill.block_editor.blocks') ??
-                config('twill.block_editor.repeaters') ?? [],
+                (config('twill.block_editor.repeaters') ?? []),
         );
     }
 

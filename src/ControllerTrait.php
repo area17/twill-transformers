@@ -33,12 +33,11 @@ trait ControllerTrait
     {
         $view =
             $view ??
-            $data['layout_name'] ??
-            $this->layoutName ??
-            $data['template_name'] ??
-            $this->templateName ??
-            $this->getViewFromRepository() ??
-            null;
+            ($data['layout_name'] ??
+                ($this->layoutName ??
+                    ($data['template_name'] ??
+                        ($this->templateName ??
+                            ($this->getViewFromRepository() ?? null)))));
 
         if (filled($view)) {
             return $view;

@@ -35,11 +35,9 @@ class Raw extends Block
             });
 
         if (filled($block->medias ?? null) && $block->medias->count() > 0) {
-            $data['image'] = $block->transformMedia($block);
+            $data['images'] = $block->transformImages();
 
-            if ($block->medias->count() > 1) {
-                $data['images'] = $block->transformImages();
-            }
+            $data['image'] = $data['images'][0] ?? null;
         }
 
         return $data;

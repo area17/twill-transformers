@@ -13,6 +13,8 @@ use A17\TwillTransformers\Transformers\Media as MediaTransformer;
 
 trait HasMedia
 {
+    protected $globalMediaParams;
+
     /**
      * @param $object
      * @return mixed
@@ -294,7 +296,8 @@ trait HasMedia
                 : $object->getMediasParams() ??
                     $this->extractMediasParamsFromModel($object);
 
-        return $mediasParams ?? Croppings::BLOCK_EDITOR;
+        return $mediasParams ??
+            ($this->globalMediaParams ?? Croppings::BLOCK_EDITOR);
     }
 
     /**
@@ -477,5 +480,17 @@ trait HasMedia
         }
 
         return $class;
+    }
+
+    public function setGlobalMediaParams($params)
+    {
+        $this->globalMediaParams = $params;
+
+        return $this;
+    }
+
+    public function getGlobalMediaParams()
+    {
+        return $this->globalMediaParams;
     }
 }

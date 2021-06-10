@@ -26,6 +26,8 @@ trait HasBlocks
 
                 $block->setActiveLocale($this);
 
+                $block->setGlobalMediaParams($this->getGlobalMediaParams());
+
                 $block->content = $blockModel->content;
 
                 $block->block = $blockModel;
@@ -80,9 +82,13 @@ trait HasBlocks
             return null;
         }
 
-        return (new BlockTransformer($blocks->values()))
-            ->setActiveLocale($model)
-            ->transform();
+        $transformer = new BlockTransformer($blocks->values());
+
+        $transformer->setActiveLocale($model);
+
+        $transformer->setGlobalMediaParams($this->getGlobalMediaParams());
+
+        return $transformer->transform();
     }
 
     /**

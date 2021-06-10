@@ -522,7 +522,7 @@ abstract class Transformer implements TransformerContract, ArrayAccess
 
     public function isCallingTransformRecursively()
     {
-        return static::$recurse[get_class($this)] ?? 0 > 3;
+        return (static::$recurse[get_class($this)] ?? 0) > 50;
     }
 
     public function set($property, $value)

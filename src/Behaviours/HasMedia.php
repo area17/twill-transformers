@@ -180,6 +180,8 @@ trait HasMedia
 
             'crop_h' => $media->pivot->crop_h,
 
+            'lqip' => $media->pivot->lqip_data ?? '',
+
             'ratio' => $this->calculateImageRatio(
                 $mediasParams[$roleName][$cropName]['ratio'] ??
                     ($mediasParams[$roleName][$cropName][0]['ratio'] ?? null),

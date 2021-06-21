@@ -208,10 +208,15 @@ abstract class Transformer implements TransformerContract, ArrayAccess
 
     public function __forwardCallTo($name, $arguments)
     {
-        if (filled($this->data ?? null) && method_exists($this->data, $name)) {
+        if (
+            filled($this->data ?? null) &&
+            is_object($this->data) &&
+            method_exists($this->data, $name)
+        ) {
             $object = $this->data;
         } elseif (
             filled($this->data['data'] ?? null) &&
+            is_object($this->data['data']) &&
             method_exists($this->data['data'], $name)
         ) {
             $object = $this->data['data'];

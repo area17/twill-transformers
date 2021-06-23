@@ -19,6 +19,8 @@ abstract class Transformer implements TransformerContract, ArrayAccess
 {
     use HasMedia, HasBlocks, HasTranslation, ClassFinder, HasConfig;
 
+    const NO_DATA_GENERATED = 'NO-DATA-GENERATED';
+
     protected static $recurse = [];
 
     /**
@@ -176,8 +178,17 @@ abstract class Transformer implements TransformerContract, ArrayAccess
      */
     public function __call($name, $arguments)
     {
-        return $this->__callTransformMethod($name, $arguments) ??
-            $this->__forwardCallTo($name, $arguments);
+        $transformed = $this->__callTransformMethod($name, $arguments);
+
+        if ($transformed === self::NO_DATA_GENERATED) {
+            return null;
+        }
+
+        if (isset($transformed)) {
+            return $transformed;
+        }
+
+        return $this->__forwardCallTo($name, $arguments);
     }
 
     public function __callTransformMethod($name, $arguments)
@@ -197,7 +208,7 @@ abstract class Transformer implements TransformerContract, ArrayAccess
 
                 static::dencrementTransformCalls();
 
-                return $transformed;
+                return $transformed ?? self::NO_DATA_GENERATED;
             }
 
             TransformerException::methodNotFound($name);

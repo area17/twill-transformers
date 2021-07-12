@@ -3,9 +3,12 @@
 namespace A17\TwillTransformers\Transformers;
 
 use App\Services\Image\Croppings;
+use A17\TwillTransformers\Behaviours\HasLocale;
 
 class Images extends Media
 {
+    use HasLocale;
+
     /**
      * @return array|null
      */
@@ -80,7 +83,7 @@ class Images extends Media
     protected function unique($medias)
     {
         return $medias
-            ->sortBy(fn($media) => $media->pivot->locale === locale() ? 0 : 1)
+            ->sortBy(fn($media) => $media->pivot->locale === $this->locale() ? 0 : 1)
             ->unique(
                 fn($media) => $media->pivot->media_id .
                     $media->pivot->mediable_type .

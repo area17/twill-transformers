@@ -10,6 +10,7 @@ use A17\TwillTransformers\Behaviours\HasMedia;
 use A17\TwillTransformers\Exceptions\Template;
 use A17\TwillTransformers\Behaviours\HasBlocks;
 use A17\TwillTransformers\Behaviours\HasConfig;
+use A17\TwillTransformers\Behaviours\HasLocale;
 use A17\TwillTransformers\Behaviours\ClassFinder;
 use A17\TwillTransformers\Behaviours\HasTranslation;
 use A17\TwillTransformers\Contracts\Transformer as TransformerContract;
@@ -17,7 +18,7 @@ use A17\TwillTransformers\Exceptions\Transformer as TransformerException;
 
 abstract class Transformer implements TransformerContract, ArrayAccess
 {
-    use HasMedia, HasBlocks, HasTranslation, ClassFinder, HasConfig;
+    use HasMedia, HasBlocks, HasTranslation, ClassFinder, HasConfig, HasLocale;
 
     const NO_DATA_GENERATED = 'NO-DATA-GENERATED';
 
@@ -118,11 +119,11 @@ abstract class Transformer implements TransformerContract, ArrayAccess
      */
     protected function saveActiveLocale(?string $locale): void
     {
-        $this->oldLocale = locale();
+        $this->oldLocale = $this->locale();
 
         $this->activeLocale = $locale;
 
-        set_local_locale($locale);
+        $this->setLocalLocale($locale);
     }
 
     /**
@@ -467,7 +468,7 @@ abstract class Transformer implements TransformerContract, ArrayAccess
 
     public function getActiveLocale()
     {
-        return $this->activeLocale ?? locale();
+        return $this->activeLocale ?? $this->locale();
     }
 
     protected function setActiveLocale($locale)
@@ -495,7 +496,7 @@ abstract class Transformer implements TransformerContract, ArrayAccess
     protected function restoreActiveLocale()
     {
         if (isset($this->oldLocale)) {
-            set_local_locale($this->oldLocale);
+            $this->setLocalLocale($this->oldLocale);
         }
     }
 

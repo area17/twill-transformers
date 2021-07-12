@@ -53,23 +53,6 @@ if (!function_exists('_transform')) {
     }
 }
 
-if (!function_exists('locale')) {
-    function locale()
-    {
-        return app()->getLocale();
-    }
-}
-
-if (!function_exists('set_local_locale')) {
-    function set_local_locale($locale)
-    {
-        config([
-            'app.locale' => $locale,
-            'translatable.locale' => $locale,
-        ]);
-    }
-}
-
 if (!function_exists('convert_blanks_to_nulls')) {
     function convert_blanks_to_nulls($subject)
     {

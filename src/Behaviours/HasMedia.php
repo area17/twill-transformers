@@ -13,6 +13,8 @@ use A17\TwillTransformers\Transformers\Media as MediaTransformer;
 
 trait HasMedia
 {
+    use HasLocale;
+
     protected $globalMediaParams;
 
     /**
@@ -22,7 +24,7 @@ trait HasMedia
     protected function getFirstTranslatedMedia($object)
     {
         return $object->medias->first(function ($media) {
-            return $media->pivot->locale === locale();
+            return $media->pivot->locale === $this->locale();
         }) ?? $object->medias->first();
     }
 

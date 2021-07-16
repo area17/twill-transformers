@@ -390,7 +390,8 @@ trait HasMedia
     public function extractMediasParamsFromModel($object)
     {
         if (isset($object['blockable_type'])) {
-            $model = new $object['blockable_type']();
+            $model = new (Relation::getMorphedModel($object['blockable_type'])
+                ?? $object['blockable_type'])();
 
             if (filled($params = $model->mediasParams ?? null)) {
                 return $params;

@@ -9,6 +9,7 @@ use App\Transformers\Transformer;
 use A17\Twill\Models\Media as MediaModel;
 use A17\TwillTransformers\Support\Croppings;
 use A17\TwillTransformers\Transformers\Media as MediaTransformer;
+use Illuminate\Database\Eloquent\Relations\Relation;
 
 trait HasMedia
 {

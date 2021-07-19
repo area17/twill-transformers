@@ -20,7 +20,7 @@ class Images extends Media
 
         $crop = $this->data['crop'] ?? ($this->crop ?? null);
 
-        return $this->mergeCrops(
+        $images = $this->mergeCrops(
             $this->filterMediasByRoleAndCrop(
                 $this->addMediasParamsToImages($medias),
                 $role,
@@ -29,6 +29,12 @@ class Images extends Media
                 return $this->transformImage($media, $role, $crop);
             }),
         );
+
+        if ($images->pluck('locale')->contains($this->locale())) {
+            return $images->where('locale', $this->locale());
+        }
+
+        return $images;
     }
 
     public function filterMediasByRoleAndCrop($medias, $role, $crop)

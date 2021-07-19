@@ -339,6 +339,7 @@ trait HasMedia
             'caption' => $media->getMetadata('caption'),
             'alt' => $media->getMetadata('altText'),
             'sources' => $this->generateSources($object, $role, $crop),
+            'locale' => $media->pivot->locale ?? $this->locale(),
         ];
     }
 

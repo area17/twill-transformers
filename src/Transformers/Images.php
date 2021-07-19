@@ -65,14 +65,16 @@ class Images extends Media
         $images = array_remove_nulls($images);
 
         foreach ($images as $image) {
-            if (blank($result[$image['src']] ?? null)) {
-                $result[$image['src']] = $image;
+            $key = $image['src'].$image['locale'];
+
+            if (blank($result[$key] ?? null)) {
+                $result[$key] = $image;
 
                 continue;
             }
 
-            $result[$image['src']]['sources'] = array_merge_recursive(
-                $result[$image['src']]['sources'] ?? [],
+            $result[$key]['sources'] = array_merge_recursive(
+                $result[$key]['sources'] ?? [],
                 $image['sources'] ?? [],
             );
         }

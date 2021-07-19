@@ -265,11 +265,7 @@ trait HasMedia
 
         if (filled($object->medias ?? null)) {
             if ($this->croppingsWereSelected()) {
-                $media = $this->imageObject($this->role, $this->crop);
-
-                if (filled($media)) {
-                    return $media;
-                }
+                return $this->imageObject($this->role, $this->crop);
             }
 
             return $this->getFirstTranslatedMedia($object);

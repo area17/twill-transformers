@@ -20,8 +20,11 @@ trait HasMedia
     protected function getFirstTranslatedMedia($object)
     {
         return $object->medias->first(function ($media) {
-            return $media->pivot->locale === locale();
-        }) ?? $object->medias->first();
+            return $media->pivot->locale === locale()
+            && $media->pivot->role === $this->role
+            && $media->pivot->crop === $this->crop;
+        }) ?? $object->medias->where('role', $object->role)
+            ->where('role', $object->crop)->first();
     }
 
     /**

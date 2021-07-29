@@ -36,7 +36,7 @@ trait HasTranslation
      * @param $text
      * @return array|mixed|string|null
      */
-    function getTranslated($input)
+    public function getTranslated($input)
     {
         if (is_string($input)) {
             return ___($input, locale());
@@ -44,7 +44,7 @@ trait HasTranslation
 
         if (is_traversable($input)) {
             return $input[$this->getActiveLocale() ?? locale()] ??
-                ($input[fallback_locale()] ?? '');
+                ($input[config('translatable.fallback_locale')] ?? '');
         }
 
         return null;

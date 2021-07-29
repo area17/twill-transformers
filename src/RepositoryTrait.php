@@ -56,7 +56,7 @@ trait RepositoryTrait
         $objects[] = $this;
 
         return collect($objects)->reduce(
-            fn($name, $object) => $name ??
+            fn ($name, $object) => $name ??
                 $this->getTemplateNameFromObject($object),
         );
     }
@@ -80,7 +80,7 @@ trait RepositoryTrait
                 ->pluck('locale')
                 ->contains($locale = locale())
                 ? $locale
-                : fallback_locale();
+                : config('translatable.fallback_locale');
         }
 
         return locale();

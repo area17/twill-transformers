@@ -232,7 +232,11 @@ abstract class Transformer implements TransformerContract, ArrayAccess
             method_exists($this->data['data'], $name)
         ) {
             $object = $this->data['data'];
-        } elseif (is_array($this->data) && isset($this->data['data'])) {
+        } elseif (
+            isset($this->data) &&
+            is_array($this->data) &&
+            isset($this->data['data'])
+        ) {
             $object = $this->data['data'];
         } elseif (isset($this->data['block'])) {
             $object = $this->data['block'];

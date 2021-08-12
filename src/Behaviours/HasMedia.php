@@ -10,6 +10,7 @@ use A17\Twill\Models\Media as MediaModel;
 use A17\TwillTransformers\Support\Croppings;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use A17\TwillTransformers\Transformers\Media as MediaTransformer;
+use Illuminate\Database\Eloquent\Relations\Relation;
 
 trait HasMedia
 {
@@ -24,8 +25,11 @@ trait HasMedia
     protected function getFirstTranslatedMedia($object)
     {
         return $object->medias->first(function ($media) {
-            return $media->pivot->locale === $this->locale();
-        }) ?? $object->medias->first();
+            return $media->pivot->locale === locale()
+            && $media->pivot->role === $this->role
+            && $media->pivot->crop === $this->crop;
+        }) ?? $object->medias->where('role', $object->role)
+            ->where('role', $object->crop)->first();
     }
 
     /**
@@ -184,6 +188,8 @@ trait HasMedia
             'crop_w' => $media->pivot->crop_w,
 
             'crop_h' => $media->pivot->crop_h,
+
+            'lqip' => $media->pivot->lqip_data ?? '',
 
             'ratio' => $this->calculateImageRatio(
                 $mediasParams[$roleName][$cropName]['ratio'] ??

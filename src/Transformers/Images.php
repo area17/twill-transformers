@@ -71,7 +71,7 @@ class Images extends Media
         $images = array_remove_nulls($images);
 
         foreach ($images as $image) {
-            $key = $image['src'].$image['locale'];
+            $key = $image['src'] . $image['locale'];
 
             if (blank($result[$key] ?? null)) {
                 $result[$key] = $image;
@@ -91,7 +91,9 @@ class Images extends Media
     protected function unique($medias)
     {
         return $medias
-            ->sortBy(fn($media) => $media->pivot->locale === $this->locale() ? 0 : 1)
+            ->sortBy(
+                fn($media) => $media->pivot->locale === $this->locale() ? 0 : 1,
+            )
             ->unique(
                 fn($media) => $media->pivot->media_id .
                     $media->pivot->mediable_type .

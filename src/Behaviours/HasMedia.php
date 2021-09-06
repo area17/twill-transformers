@@ -180,7 +180,7 @@ trait HasMedia
             return null;
         }
 
-        return [
+        return collect([
             'src' => $src,
 
             'crop_x' => $media->pivot->crop_x,
@@ -198,12 +198,16 @@ trait HasMedia
                     ($mediasParams[$roleName][$cropName][0]['ratio'] ?? null),
                 $media,
             ),
-        ] +
-            $this->makeExtraParams(
-                $src,
-                $medisaParams[$roleName][$cropName]['extra'] ??
-                    ($mediasParams[$roleName][$cropName][0]['extra'] ?? []),
-            );
+        ])
+            ->filter(fn($item) => !blank($item))
+            ->merge(
+                $this->makeExtraParams(
+                    $src,
+                    $medisaParams[$roleName][$cropName]['extra'] ??
+                        ($mediasParams[$roleName][$cropName][0]['extra'] ?? []),
+                ),
+            )
+            ->toArray();
     }
 
     /**
@@ -414,18 +418,26 @@ trait HasMedia
     public function makeExtraParams($src, $extraParams)
     {
         return collect($extraParams)
-            ->map(
-                fn($definitions) => $this->makeExtraParamsString(
-                    $definitions,
-                    $src,
-                ),
-            )
+            ->map(function ($definitions) use ($src) {
+                if (is_string($definitions)) {
+                    return ['type' => 'string', 'value' => $definitions];
+                }
+
+                return [
+                    'type' => 'array',
+                    'value' => $this->makeExtraParamsString($definitions, $src),
+                ];
+            })
             ->map(function ($param, $key) use ($extraParams, $src) {
+                if ($param['type'] === 'string') {
+                    return $param['value'];
+                }
+
                 $isSpecial = isset($extraParams[$key][0]['__items']);
 
                 return $isSpecial
-                    ? $param
-                    : $this->addParamsToUrl($src, $param);
+                    ? $param['value']
+                    : $this->addParamsToUrl($src, $param['value']);
             })
             ->toArray();
     }

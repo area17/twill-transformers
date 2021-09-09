@@ -53,7 +53,9 @@ trait ControllerTrait
      */
     public function view($data = null, $view = null, $transformerClass = null)
     {
-        if (!isset($this->repositoryClass) && !isset($transformerClass)) {
+        $transformerClass = $this->getTransformerClass($transformerClass);
+
+        if (!isset($this->repositoryClass) && blank($transformerClass)) {
             Repository::missingClass(__CLASS__);
         }
 
@@ -98,8 +100,7 @@ trait ControllerTrait
     protected function getTransformer($data, $transformerClass)
     {
         if (
-            filled($class = $transformerClass) ||
-            filled($class = $this->transformerClass ?? null)
+            filled($class = $this->getTransformerClass($transformerClass))
         ) {
             $transformer = app($class)->setData($data);
         }
@@ -115,6 +116,11 @@ trait ControllerTrait
         }
 
         TransformerException::missingOnController();
+    }
+
+    public function getTransformerClass($transformerClass = null)
+    {
+        return $transformerClass ?? $this->transformerClass ?? null;
     }
 
     public function makeView($view = null, $data = null)

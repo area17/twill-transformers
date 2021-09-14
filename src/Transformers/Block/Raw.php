@@ -24,7 +24,7 @@ class Raw extends Block
      * @param \A17\TwillTransformers\Transformers\Block $block
      * @return \Illuminate\Support\Collection
      */
-    protected function transformBlockContent(Block $block): Collection
+    protected function transformBlockContent($block): Collection
     {
         $data = collect($block->content)
             ->keys()

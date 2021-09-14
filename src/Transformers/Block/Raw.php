@@ -4,9 +4,10 @@ namespace A17\TwillTransformers\Transformers\Block;
 
 use Illuminate\Support\Str;
 use Illuminate\Support\Collection;
-use A17\TwillTransformers\Transformers\Block;
+use A17\Twill\Models\Block as BlockModel;
+use A17\TwillTransformers\Transformers\Block as BlockTransformer;
 
-class Raw extends Block
+class Raw extends BlockTransformer
 {
     /**
      * @return array|\Illuminate\Support\Collection|null
@@ -21,11 +22,13 @@ class Raw extends Block
     }
 
     /**
-     * @param \A17\TwillTransformers\Transformers\Block $block
+     * @param \A17\TwillTransformers\Transformers\Block|A17\Twill\Models\Block $block
      * @return \Illuminate\Support\Collection
      */
     protected function transformBlockContent($block): Collection
     {
+        $block = $this->encapsulateBlock($block);
+
         $data = collect($block->content)
             ->keys()
             ->mapWithKeys(function ($key) use ($block) {
@@ -47,7 +50,7 @@ class Raw extends Block
      * @param \A17\TwillTransformers\Transformers\Block $block
      * @return \Illuminate\Support\Collection|null
      */
-    protected function transformRawBlockData(Block $block)
+    protected function transformRawBlockData($block)
     {
         if (!is_traversable($block->content)) {
             return null;
@@ -90,5 +93,14 @@ class Raw extends Block
     public function transformBlockType($type)
     {
         return Str::kebab(Str::camel($type));
+    }
+
+    public function encapsulateBlock($block)
+    {
+        if ($block instanceof Block) {
+            return $block;
+        }
+
+        return new BlockTransformer($block);
     }
 }

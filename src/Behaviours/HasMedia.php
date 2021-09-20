@@ -180,6 +180,13 @@ trait HasMedia
             return null;
         }
 
+        foreach ($mediasParams[$roleName][$cropName] ?? [] as $param) {
+            if ($param['name'] == $media->pivot->ratio) {
+                $ratio = $param['ratio'];
+                break;
+            }
+        }
+
         return collect([
             'src' => $src,
 
@@ -194,6 +201,7 @@ trait HasMedia
             'lqip' => $media->pivot->lqip_data ?? '',
 
             'ratio' => $this->calculateImageRatio(
+                $ratio ??
                 $mediasParams[$roleName][$cropName]['ratio'] ??
                     ($mediasParams[$roleName][$cropName][0]['ratio'] ?? null),
                 $media,

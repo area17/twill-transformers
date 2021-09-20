@@ -46,4 +46,9 @@ class Transformer extends \Exception
             "Data was not transformed on class '$class', maybe a transformer was not available on the repository or not passed as argument.",
         );
     }
+
+    public static function dataAlreadySet($class)
+    {
+        throw new self("Data for '$class', was already set.");
+    }
 }

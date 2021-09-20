@@ -3,9 +3,12 @@
 namespace A17\TwillTransformers\Transformers;
 
 use App\Services\Image\Croppings;
+use A17\TwillTransformers\Behaviours\HasLocale;
 
 class Images extends Media
 {
+    use HasLocale;
+
     /**
      * @return array|null
      */
@@ -17,7 +20,7 @@ class Images extends Media
 
         $crop = $this->data['crop'] ?? ($this->crop ?? null);
 
-        return $this->mergeCrops(
+        $images = $this->mergeCrops(
             $this->filterMediasByRoleAndCrop(
                 $this->addMediasParamsToImages($medias),
                 $role,
@@ -26,6 +29,12 @@ class Images extends Media
                 return $this->transformImage($media, $role, $crop);
             }),
         );
+
+        if ($images->pluck('locale')->contains($this->locale())) {
+            return $images->where('locale', $this->locale());
+        }
+
+        return $images;
     }
 
     public function filterMediasByRoleAndCrop($medias, $role, $crop)
@@ -62,14 +71,16 @@ class Images extends Media
         $images = array_remove_nulls($images);
 
         foreach ($images as $image) {
-            if (blank($result[$image['src']] ?? null)) {
-                $result[$image['src']] = $image;
+            $key = $image['src'] . $image['locale'];
+
+            if (blank($result[$key] ?? null)) {
+                $result[$key] = $image;
 
                 continue;
             }
 
-            $result[$image['src']]['sources'] = array_merge_recursive(
-                $result[$image['src']]['sources'] ?? [],
+            $result[$key]['sources'] = array_merge_recursive(
+                $result[$key]['sources'] ?? [],
                 $image['sources'] ?? [],
             );
         }
@@ -79,13 +90,15 @@ class Images extends Media
 
     protected function unique($medias)
     {
-        return $medias->sortBy(
-            fn($media) => $media->pivot->locale === locale() ? 0 : 1,
-        )->unique(
-            fn($media) => $media->pivot->media_id .
-                $media->pivot->mediable_type .
-                $media->pivot->crop .
-                $media->pivot->role,
-        );
+        return $medias
+            ->sortBy(
+                fn($media) => $media->pivot->locale === $this->locale() ? 0 : 1,
+            )
+            ->unique(
+                fn($media) => $media->pivot->media_id .
+                    $media->pivot->mediable_type .
+                    $media->pivot->crop .
+                    $media->pivot->role,
+            );
     }
 }

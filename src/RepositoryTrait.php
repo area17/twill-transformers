@@ -6,6 +6,7 @@ use App\Support\Templates;
 use A17\Twill\Models\Model;
 use Illuminate\Support\Str;
 use A17\TwillTransformers\Behaviours\HasConfig;
+use A17\TwillTransformers\Behaviours\HasLocale;
 use A17\TwillTransformers\Exceptions\Repository;
 use A17\TwillTransformers\Behaviours\ClassFinder;
 use Astrotomic\Translatable\Contracts\Translatable;
@@ -13,7 +14,7 @@ use A17\TwillTransformers\Exceptions\Transformer as TransformerException;
 
 trait RepositoryTrait
 {
-    use ClassFinder, HasConfig;
+    use ClassFinder, HasConfig, HasLocale;
 
     public function makeViewData($data = [], $transformerClass = null)
     {
@@ -78,12 +79,12 @@ trait RepositoryTrait
         ) {
             return $model->translations
                 ->pluck('locale')
-                ->contains($locale = locale())
+                ->contains($locale = $this->locale())
                 ? $locale
                 : fallback_locale();
         }
 
-        return locale();
+        return $this->locale();
     }
 
     protected function getTemplateNameFromObject($object)

@@ -10,6 +10,7 @@ use A17\TwillTransformers\Behaviours\HasMedia;
 use A17\TwillTransformers\Exceptions\Template;
 use A17\TwillTransformers\Behaviours\HasBlocks;
 use A17\TwillTransformers\Behaviours\HasConfig;
+use A17\TwillTransformers\Behaviours\HasLocale;
 use A17\TwillTransformers\Behaviours\ClassFinder;
 use A17\TwillTransformers\Behaviours\HasTranslation;
 use A17\TwillTransformers\Contracts\Transformer as TransformerContract;
@@ -17,7 +18,9 @@ use A17\TwillTransformers\Exceptions\Transformer as TransformerException;
 
 abstract class Transformer implements TransformerContract, ArrayAccess
 {
-    use HasMedia, HasBlocks, HasTranslation, ClassFinder, HasConfig;
+    use HasMedia, HasBlocks, HasTranslation, ClassFinder, HasConfig, HasLocale;
+
+    const NO_DATA_GENERATED = 'NO-DATA-GENERATED';
 
     protected static $recurse = [];
 
@@ -43,6 +46,10 @@ abstract class Transformer implements TransformerContract, ArrayAccess
 
     public function __construct($data = null)
     {
+        if (is_object($data) && method_exists($data, 'getGlobalMediaParams')) {
+            $this->setGlobalMediaParams($data->getGlobalMediaParams());
+        }
+
         $this->setData($data);
     }
 
@@ -112,11 +119,11 @@ abstract class Transformer implements TransformerContract, ArrayAccess
      */
     protected function saveActiveLocale(?string $locale): void
     {
-        $this->oldLocale = locale();
+        $this->oldLocale = $this->locale();
 
         $this->activeLocale = $locale;
 
-        set_local_locale($locale);
+        $this->setLocalLocale($locale);
     }
 
     /**
@@ -172,8 +179,17 @@ abstract class Transformer implements TransformerContract, ArrayAccess
      */
     public function __call($name, $arguments)
     {
-        return $this->__callTransformMethod($name, $arguments) ??
-            $this->__forwardCallTo($name, $arguments);
+        $transformed = $this->__callTransformMethod($name, $arguments);
+
+        if ($transformed === self::NO_DATA_GENERATED) {
+            return null;
+        }
+
+        if (isset($transformed)) {
+            return $transformed;
+        }
+
+        return $this->__forwardCallTo($name, $arguments);
     }
 
     public function __callTransformMethod($name, $arguments)
@@ -193,7 +209,7 @@ abstract class Transformer implements TransformerContract, ArrayAccess
 
                 static::dencrementTransformCalls();
 
-                return $transformed;
+                return $transformed ?? self::NO_DATA_GENERATED;
             }
 
             TransformerException::methodNotFound($name);
@@ -204,11 +220,23 @@ abstract class Transformer implements TransformerContract, ArrayAccess
 
     public function __forwardCallTo($name, $arguments)
     {
-        if (filled($this->data ?? null) && !is_array($this->data) && method_exists($this->data, $name)) {
+        if (
+            filled($this->data ?? null) &&
+            is_object($this->data) &&
+            method_exists($this->data, $name)
+        ) {
             $object = $this->data;
-        } elseif (filled($this->data['data'] ?? null) && !is_array($this->data['data']) && method_exists($this->data['data'], $name)) {
+        } elseif (
+            filled($this->data['data'] ?? null) &&
+            is_object($this->data['data']) &&
+            method_exists($this->data['data'], $name)
+        ) {
             $object = $this->data['data'];
-        } elseif (is_array($this->data) && isset($this->data['data'])) {
+        } elseif (
+            isset($this->data) &&
+            is_array($this->data) &&
+            isset($this->data['data'])
+        ) {
             $object = $this->data['data'];
         } elseif (isset($this->data['block'])) {
             $object = $this->data['block'];
@@ -245,7 +273,9 @@ abstract class Transformer implements TransformerContract, ArrayAccess
         );
 
         if (filled($class)) {
-            return (new $class())->setActiveLocale($this);
+            return (new $class())
+                ->setActiveLocale($this)
+                ->setGlobalMediaParams($this->getGlobalMediaParams());
         }
 
         return null;
@@ -442,7 +472,7 @@ abstract class Transformer implements TransformerContract, ArrayAccess
 
     public function getActiveLocale()
     {
-        return $this->activeLocale ?? locale();
+        return $this->activeLocale ?? $this->locale();
     }
 
     protected function setActiveLocale($locale)
@@ -470,7 +500,7 @@ abstract class Transformer implements TransformerContract, ArrayAccess
     protected function restoreActiveLocale()
     {
         if (isset($this->oldLocale)) {
-            set_local_locale($this->oldLocale);
+            $this->setLocalLocale($this->oldLocale);
         }
     }
 
@@ -513,7 +543,7 @@ abstract class Transformer implements TransformerContract, ArrayAccess
 
     public function isCallingTransformRecursively()
     {
-        return static::$recurse[get_class($this)] ?? 0 > 3;
+        return (static::$recurse[get_class($this)] ?? 0) > 50;
     }
 
     public function set($property, $value)

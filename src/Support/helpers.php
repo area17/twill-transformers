@@ -53,23 +53,6 @@ if (!function_exists('_transform')) {
     }
 }
 
-if (!function_exists('locale')) {
-    function locale()
-    {
-        return app()->getLocale();
-    }
-}
-
-if (!function_exists('set_local_locale')) {
-    function set_local_locale($locale)
-    {
-        config([
-            'app.locale' => $locale,
-            'translatable.locale' => $locale,
-        ]);
-    }
-}
-
 if (!function_exists('convert_blanks_to_nulls')) {
     function convert_blanks_to_nulls($subject)
     {
@@ -173,11 +156,21 @@ if (!function_exists('array_remove_nulls')) {
     }
 }
 
-if (!function_exists('_rf')) {
-    function _rf($name, $parameters = [], $absolute = true)
+if (!function_exists('is_json')) {
+    function is_json($string)
     {
-        URL::forceRootUrl(config('app.url'));
+        if (!is_string($string)) {
+            return false;
+        }
 
-        return route("front.$name", $parameters, $absolute);
+        return is_array(json_decode($string, true));
+    }
+}
+
+if (!function_exists('fallback_locale')) {
+    function fallback_locale()
+    {
+        return config('translatable.fallback_locale') ??
+            config('app.fallback_locale');
     }
 }

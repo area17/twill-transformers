@@ -4,6 +4,8 @@ namespace A17\TwillTransformers\Behaviours;
 
 trait HasTranslation
 {
+    use HasLocale;
+
     /**
      * @param $source
      * @param null $property
@@ -15,7 +17,7 @@ trait HasTranslation
             $source = json_decode($source, true);
         }
 
-        if (is_string($source)) {
+        if (!is_traversable($source)) {
             return $source;
         }
 
@@ -39,11 +41,11 @@ trait HasTranslation
     function getTranslated($input)
     {
         if (is_string($input)) {
-            return ___($input, locale());
+            return ___($input, $this->locale());
         }
 
         if (is_traversable($input)) {
-            return $input[$this->getActiveLocale() ?? locale()] ??
+            return $input[$this->getActiveLocale() ?? $this->locale()] ??
                 ($input[fallback_locale()] ?? '');
         }
 

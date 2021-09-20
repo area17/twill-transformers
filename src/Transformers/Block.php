@@ -190,7 +190,8 @@ class Block extends Transformer
             ? 'block-collection'
             : (is_string($data)
                 ? $data
-                : $data['type'] ?? ($data->type ?? null));
+                : $data['type'] ??
+                    (property_exists($data, 'type') ? $data->type : null));
 
         if (filled($this->type = $this->type ?? $type)) {
             return;

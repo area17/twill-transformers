@@ -8,10 +8,15 @@ use Illuminate\Support\Str;
 use App\Transformers\Transformer;
 use A17\Twill\Models\Media as MediaModel;
 use A17\TwillTransformers\Support\Croppings;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use A17\TwillTransformers\Transformers\Media as MediaTransformer;
 
 trait HasMedia
 {
+    use HasLocale;
+
+    protected $globalMediaParams;
+
     /**
      * @param $object
      * @return mixed
@@ -19,8 +24,14 @@ trait HasMedia
     protected function getFirstTranslatedMedia($object)
     {
         return $object->medias->first(function ($media) {
-            return $media->pivot->locale === locale();
-        }) ?? $object->medias->first();
+            return $media->pivot->locale === locale() &&
+                $media->pivot->role === $this->role &&
+                $media->pivot->crop === $this->crop;
+        }) ??
+            $object->medias
+                ->where('role', $object->role)
+                ->where('role', $object->crop)
+                ->first();
     }
 
     /**
@@ -169,7 +180,7 @@ trait HasMedia
             return null;
         }
 
-        return [
+        return collect([
             'src' => $src,
 
             'crop_x' => $media->pivot->crop_x,
@@ -180,17 +191,23 @@ trait HasMedia
 
             'crop_h' => $media->pivot->crop_h,
 
+            'lqip' => $media->pivot->lqip_data ?? '',
+
             'ratio' => $this->calculateImageRatio(
                 $mediasParams[$roleName][$cropName]['ratio'] ??
                     ($mediasParams[$roleName][$cropName][0]['ratio'] ?? null),
                 $media,
             ),
-        ] +
-            $this->makeExtraParams(
-                $src,
-                $medisaParams[$roleName][$cropName]['extra'] ??
-                    ($mediasParams[$roleName][$cropName][0]['extra'] ?? []),
-            );
+        ])
+            ->filter(fn($item) => !blank($item))
+            ->merge(
+                $this->makeExtraParams(
+                    $src,
+                    $medisaParams[$roleName][$cropName]['extra'] ??
+                        ($mediasParams[$roleName][$cropName][0]['extra'] ?? []),
+                ),
+            )
+            ->toArray();
     }
 
     /**
@@ -260,11 +277,7 @@ trait HasMedia
 
         if (filled($object->medias ?? null)) {
             if ($this->croppingsWereSelected()) {
-                $media = $this->imageObject($this->role, $this->crop);
-
-                if (filled($media)) {
-                    return $media;
-                }
+                return $this->imageObject($this->role, $this->crop);
             }
 
             return $this->getFirstTranslatedMedia($object);
@@ -293,7 +306,8 @@ trait HasMedia
                 : $object->getMediasParams() ??
                     $this->extractMediasParamsFromModel($object);
 
-        return $mediasParams ?? Croppings::BLOCK_EDITOR;
+        return $mediasParams ??
+            ($this->globalMediaParams ?? Croppings::BLOCK_EDITOR);
     }
 
     /**
@@ -333,6 +347,7 @@ trait HasMedia
             'caption' => $media->getMetadata('caption'),
             'alt' => $media->getMetadata('altText'),
             'sources' => $this->generateSources($object, $role, $crop),
+            'locale' => $media->pivot->locale ?? $this->locale(),
         ];
     }
 
@@ -388,7 +403,9 @@ trait HasMedia
     public function extractMediasParamsFromModel($object)
     {
         if (isset($object['blockable_type'])) {
-            $model = new $object['blockable_type']();
+            $class = $this->getBlockableTypeClass($object);
+
+            $model = new $class();
 
             if (filled($params = $model->mediasParams ?? null)) {
                 return $params;
@@ -401,18 +418,26 @@ trait HasMedia
     public function makeExtraParams($src, $extraParams)
     {
         return collect($extraParams)
-            ->map(
-                fn($definitions) => $this->makeExtraParamsString(
-                    $definitions,
-                    $src,
-                ),
-            )
+            ->map(function ($definitions) use ($src) {
+                if (is_string($definitions)) {
+                    return ['type' => 'string', 'value' => $definitions];
+                }
+
+                return [
+                    'type' => 'array',
+                    'value' => $this->makeExtraParamsString($definitions, $src),
+                ];
+            })
             ->map(function ($param, $key) use ($extraParams, $src) {
+                if ($param['type'] === 'string') {
+                    return $param['value'];
+                }
+
                 $isSpecial = isset($extraParams[$key][0]['__items']);
 
                 return $isSpecial
-                    ? $param
-                    : $this->addParamsToUrl($src, $param);
+                    ? $param['value']
+                    : $this->addParamsToUrl($src, $param['value']);
             })
             ->toArray();
     }
@@ -463,5 +488,28 @@ trait HasMedia
     {
         return $src ==
             'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+    }
+
+    public function getBlockableTypeClass($object)
+    {
+        $class = $object['blockable_type'];
+
+        if (!class_exists($class)) {
+            return Relation::getMorphedModel($class);
+        }
+
+        return $class;
+    }
+
+    public function setGlobalMediaParams($params)
+    {
+        $this->globalMediaParams = $params;
+
+        return $this;
+    }
+
+    public function getGlobalMediaParams()
+    {
+        return $this->globalMediaParams;
     }
 }

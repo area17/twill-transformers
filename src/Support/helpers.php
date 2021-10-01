@@ -1,6 +1,7 @@
 <?php
 
 use A17\Twill\Models\Block;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Database\Eloquent\Model;
 use A17\Twill\Models\Block as BlockModel;
@@ -95,19 +96,16 @@ if (!function_exists('to_array')) {
             return $collection;
         }
 
-        if (is_array($collection)) {
-            $collection = collect($collection);
+        $newCollection = [];
+
+        foreach ($collection as $key => $value)
+        {
+            $newCollection[$key] = is_traversable($value) ? to_array($value) : $value;
         }
 
-        $collection = $collection->map(function ($item) {
-            if (is_traversable($item)) {
-                return to_array($item);
-            }
+        $collection = collect($newCollection);
 
-            return $item;
-        });
-
-        if (keys_are_all_numeric($collection)) {
+        if ($collection instanceof Collection && keys_are_all_numeric($collection)) {
             $collection = $collection->values();
         }
 

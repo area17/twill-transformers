@@ -16,6 +16,13 @@ use A17\TwillTransformers\Behaviours\HasTranslation;
 use A17\TwillTransformers\Contracts\Transformer as TransformerContract;
 use A17\TwillTransformers\Exceptions\Transformer as TransformerException;
 
+/**
+ * @property mixed $data
+ * @method mixed transformBlocks($data = null)
+ * @method mixed transformImages($data = null)
+ * @method mixed transformBlockRaw($data = null)
+ * @method mixed transformMedia($object = null, $role = null, $crop = null)
+ */
 abstract class Transformer implements TransformerContract, ArrayAccess
 {
     use HasMedia, HasBlocks, HasTranslation, ClassFinder, HasConfig, HasLocale;
@@ -299,13 +306,14 @@ abstract class Transformer implements TransformerContract, ArrayAccess
         return property_exists($this, $offset) ||
             isset(to_array($this->content ?? null)[$offset]) ||
             isset($this->data->{$offset}) ||
-            isset($this->data[$offset]) ||
-            isset($this->data['data'][$offset]) ||
-            isset(to_array($this->data['content'] ?? null)[$offset]) ||
-            isset($this->data['data'][$offset]) ||
-            isset($this->data['data']['content'][$offset]) ||
             isset($this->block->{$offset}) ||
-            isset($this->data['block'][$offset]);
+            (is_iterable($this->data) &&
+                (isset($this->data[$offset]) ||
+                    isset($this->data['data'][$offset]) ||
+                    isset(to_array($this->data['content'] ?? null)[$offset]) ||
+                    isset($this->data['data'][$offset]) ||
+                    isset($this->data['data']['content'][$offset]) ||
+                    isset($this->data['block'][$offset])));
     }
 
     /**
@@ -382,20 +390,22 @@ abstract class Transformer implements TransformerContract, ArrayAccess
             return $data->{$name};
         }
 
-        if (isset($data[$name])) {
-            return $data[$name];
-        }
+        if (is_iterable($data)) {
+            if (isset($data[$name])) {
+                return $data[$name];
+            }
 
-        if (filled($data['data']->{$name} ?? null)) {
-            return $data['data']->{$name};
-        }
+            if (filled($data['data']->{$name} ?? null)) {
+                return $data['data']->{$name};
+            }
 
-        if (filled($data['data'][$name] ?? null)) {
-            return $data['data'][$name];
-        }
+            if (filled($data['data'][$name] ?? null)) {
+                return $data['data'][$name];
+            }
 
-        if (isset($data['data']->$name)) {
-            return $data['data']->$name;
+            if (isset($data['data']->$name)) {
+                return $data['data']->$name;
+            }
         }
 
         if (
@@ -405,12 +415,14 @@ abstract class Transformer implements TransformerContract, ArrayAccess
             return to_array($data->content)[$name];
         }
 
-        if (isset(to_array($data['content'] ?? null)[$name])) {
-            return to_array($data['content'])[$name];
-        }
+        if (is_iterable($data)) {
+            if (isset(to_array($data['content'] ?? null)[$name])) {
+                return to_array($data['content'])[$name];
+            }
 
-        if (isset(to_array($data['data']['content'] ?? null)[$name])) {
-            return to_array($data['data']['content'])[$name];
+            if (isset(to_array($data['data']['content'] ?? null)[$name])) {
+                return to_array($data['data']['content'])[$name];
+            }
         }
 
         // Developer may also refer to Twill's Block Model
@@ -418,7 +430,7 @@ abstract class Transformer implements TransformerContract, ArrayAccess
             return $data->block->{$name};
         }
 
-        if (isset($data['block'][$name])) {
+        if (is_iterable($data) && isset($data['block'][$name])) {
             return $data['block'][$name];
         }
 
@@ -483,7 +495,7 @@ abstract class Transformer implements TransformerContract, ArrayAccess
                 ($modelLocale = $locale->getAttributes()['locale'] ?? null)
             ) {
                 $locale = $modelLocale;
-            } elseif (isset($locale['active_locale'])) {
+            } elseif (is_iterable($locale) && isset($locale['active_locale'])) {
                 $locale = $locale['active_locale'];
             } elseif ($locale instanceof Transformer) {
                 $locale = $locale->getActiveLocale();

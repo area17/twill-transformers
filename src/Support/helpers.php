@@ -98,14 +98,18 @@ if (!function_exists('to_array')) {
 
         $newCollection = [];
 
-        foreach ($collection as $key => $value)
-        {
-            $newCollection[$key] = is_traversable($value) ? to_array($value) : $value;
+        foreach ($collection as $key => $value) {
+            $newCollection[$key] = is_traversable($value)
+                ? to_array($value)
+                : $value;
         }
 
         $collection = collect($newCollection);
 
-        if ($collection instanceof Collection && keys_are_all_numeric($collection)) {
+        if (
+            $collection instanceof Collection &&
+            keys_are_all_numeric($collection)
+        ) {
             $collection = $collection->values();
         }
 

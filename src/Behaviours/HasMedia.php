@@ -202,8 +202,9 @@ trait HasMedia
 
             'ratio' => $this->calculateImageRatio(
                 $ratio ??
-                $mediasParams[$roleName][$cropName]['ratio'] ??
-                    ($mediasParams[$roleName][$cropName][0]['ratio'] ?? null),
+                    ($mediasParams[$roleName][$cropName]['ratio'] ??
+                        ($mediasParams[$roleName][$cropName][0]['ratio'] ??
+                            null)),
                 $media,
             ),
         ])

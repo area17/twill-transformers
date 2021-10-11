@@ -99,9 +99,7 @@ trait ControllerTrait
 
     protected function getTransformer($data, $transformerClass)
     {
-        if (
-            filled($class = $this->getTransformerClass($transformerClass))
-        ) {
+        if (filled($class = $this->getTransformerClass($transformerClass))) {
             $transformer = app($class)->setData($data);
         }
 
@@ -120,7 +118,7 @@ trait ControllerTrait
 
     public function getTransformerClass($transformerClass = null)
     {
-        return $transformerClass ?? $this->transformerClass ?? null;
+        return $transformerClass ?? ($this->transformerClass ?? null);
     }
 
     public function makeView($view = null, $data = null)

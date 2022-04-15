@@ -274,7 +274,7 @@ You can define the transformer directly inside a Blade template:
 ...
 ```
 
-On your base Transformer add a `blade()` static method to handle the data transformation:
+On your base Transformer add a `blade()` static radmethod to handle the data transformation:
 
 ```php
 public static function blade($transformer, $data): array
@@ -287,7 +287,7 @@ public static function blade($transformer, $data): array
 }
 ```
 
-Then on each transformer that can be called from Blade, you cal define a `transformStorybookData()` method to render fake data in case there is no data to be transformed. This can be used, for instance, when rendering Storybook stories via [Blast](https://github.com/area17/blast).  
+Then on each Transformer called from Blade, you can define a `transformStorybookData()` method to render fake data in case there is no data to be transformed available. This can be used, for instance, when rendering Storybook stories via [Blast](https://github.com/area17/blast).  
 
 ```php
 <?php

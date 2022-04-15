@@ -176,3 +176,10 @@ if (!function_exists('fallback_locale')) {
             config('app.fallback_locale');
     }
 }
+
+if (!function_exists('runningInBlast')) {
+    function runningInBlast($definedVars)
+    {
+        return filled($definedVars['runningInStorybook'] ?? $definedVars['canvasBgColor'] ?? null);
+    }
+}

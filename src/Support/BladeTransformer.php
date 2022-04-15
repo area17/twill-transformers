@@ -2,6 +2,8 @@
 
 namespace A17\TwillTransformers\Support;
 
+use Illuminate\Support\Str;
+
 class BladeTransformer
 {
     public function compileTransformer($code)
@@ -27,11 +29,15 @@ class BladeTransformer
 
         $bladeDefinedVars['__blast'] = $transformer->setData($bladeDefinedVars['__data'])->transform();
 
+        $bladeDefinedVars['__blast']['is_fake_data'] = false;
+
         if (
             blank($bladeDefinedVars['__blast']) &&
             method_exists($transformer, 'transformFakeData')
         ) {
             $bladeDefinedVars['__blast'] = $transformer->transformFakeData() ?? [];
+
+            $bladeDefinedVars['__blast']['is_fake_data'] = true;
         }
 
         return $bladeDefinedVars['__blast'];

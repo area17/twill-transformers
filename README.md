@@ -312,6 +312,45 @@ class Posts extends Transformer
 }
 ```
 
+If you are building a Storybook story using Blast, your story should extend the application layout 
+
+```blade
+@extends('layouts.app')
+
+@transformer(\App\Transformers\Post)
+
+@storybook([
+    'layout' => 'fullscreen',
+    'status' => 'dev',
+    'args' => []
+])
+
+@section('content')
+    <div class="container">
+        ...
+    </div>
+@endsection
+```
+
+And your layout should check if it's running in Blast and only render the story component:  
+
+```php
+@if (runningInBlast(get_defined_vars()))
+    @yield('content')
+@else
+    <!DOCTYPE html>
+    <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" data-active-nav="@yield('active_nav')">
+        <head>
+            ...
+        </head>
+        
+        <body>
+            ...
+        </body>
+    </html>
+@endif
+```
+
 ## Changelog
 
 Please see [CHANGELOG](CHANGELOG.md) for more information on what has changed recently.

@@ -11,7 +11,7 @@ class BladeTransformer
         if (class_exists($code)) {
             return '
                 <?php
-                    foreach('.$code.'::blast("'.$code.'", get_defined_vars()) as $var => $value) {
+                    foreach('.$code.'::blade("'.$code.'", get_defined_vars()) as $var => $value) {
                         $$var = $value;
                     }
                 ?>

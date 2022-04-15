@@ -274,7 +274,7 @@ You can define the transformer directly inside a Blade template:
 ...
 ```
 
-On your base Transformer add a `blade()` method to handle the data transformation:
+On your base Transformer add a `blade()` static method to handle the data transformation:
 
 ```php
 public static function blade($transformer, $data): array

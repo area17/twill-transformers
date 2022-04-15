@@ -262,6 +262,56 @@ Then you just need to create this view, that will handle and render all blocks i
 @include("components.block.{$type}.block-{$type}", $transformed)
 ```
 
+## Blade Transformers
+
+You can define the transformer directly inside a Blade template:
+
+``` blade
+@extends('layouts.app')
+
+@transformer(\App\Transformers\Post)
+
+...
+```
+
+On your base Transformer add a `blade()` method to handle the data transformation:
+
+``` blade
+public static function blade($transformer, $data): array
+{
+    if (app()->bound(BladeTransformer::class)) {
+        return app(BladeTransformer::class)->transform($transformer, $data);
+    }
+
+    return [];
+}
+```
+
+Then on each transformer that can be called from Blade, you cal define a `transformStorybookData()` method to render fake data in case there is no data to be transformed. This can be used, for instance, when rendering Storybook stories via [Blast](https://github.com/area17/blast).  
+
+``` php
+<?php
+
+namespace App\Transformers;
+
+class Posts extends Transformer
+{
+    public function transform(): array
+    {
+        return [
+            'title' => $this->title,
+        ];
+    }
+
+    public function transformStorybookData(): array
+    {
+        return [
+            'title' => 'Fake Title to Be Displayed Inside Storybook Only',
+        ];
+    }
+}
+```
+
 ## Changelog
 
 Please see [CHANGELOG](CHANGELOG.md) for more information on what has changed recently.

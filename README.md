@@ -276,7 +276,7 @@ You can define the transformer directly inside a Blade template:
 
 On your base Transformer add a `blade()` method to handle the data transformation:
 
-```blade
+```php
 public static function blade($transformer, $data): array
 {
     if (app()->bound(BladeTransformer::class)) {

@@ -4,6 +4,7 @@ namespace A17\TwillTransformers;
 
 use ArrayAccess;
 use Illuminate\Support\Str;
+use Illuminate\Support\Collection;
 use Illuminate\Database\Eloquent\Model;
 use A17\TwillTransformers\Transformers\Block;
 use A17\TwillTransformers\Behaviours\HasMedia;
@@ -99,14 +100,14 @@ abstract class Transformer implements TransformerContract, ArrayAccess
      * @return \A17\TwillTransformers\Transformer
      * @throws \A17\TwillTransformers\Exceptions\Transformer
      */
-    public function setData($data = null)
+    public function setData($data = null, $force = false)
     {
         if (blank($data)) {
             return $this;
         }
 
-        if (filled($this->data)) {
-            TransformerException::dataAlreadySet();
+        if (filled($this->data) && !$force) {
+            TransformerException::dataAlreadySet(get_class($this));
         }
 
         $this->data =
@@ -234,6 +235,13 @@ abstract class Transformer implements TransformerContract, ArrayAccess
         ) {
             $object = $this->data;
         } elseif (
+            filled($this->data ?? null) &&
+            is_object($this->data) &&
+            !method_exists($this->data, $name) &&
+            !$this->data instanceof Transformer
+        ) {
+            $object = $this->data;
+        } elseif (
             filled($this->data['data'] ?? null) &&
             is_object($this->data['data']) &&
             method_exists($this->data['data'], $name)
@@ -303,8 +311,10 @@ abstract class Transformer implements TransformerContract, ArrayAccess
      */
     public function offsetExists($offset)
     {
+        $contentArray = to_array($this->content ?? null);
+
         return property_exists($this, $offset) ||
-            isset(to_array($this->content ?? null)[$offset]) ||
+            (is_array($contentArray) && isset($contentArray[$offset])) ||
             isset($this->data->{$offset}) ||
             isset($this->block->{$offset}) ||
             (is_iterable($this->data) &&
@@ -349,9 +359,9 @@ abstract class Transformer implements TransformerContract, ArrayAccess
         return $value;
     }
 
-    public function getProperty($name)
+    public function getProperty($name, $data = null)
     {
-        $data = $this->data ?? ($this->block ?? null);
+        $data ??= $this->data ?? ($this->block ?? null);
 
         if (blank($data)) {
             return null;

@@ -5,6 +5,7 @@ namespace A17\TwillTransformers;
 use App\Support\Templates;
 use A17\Twill\Models\Model;
 use Illuminate\Support\Str;
+use A17\TwillTransformers\Transformer;
 use A17\TwillTransformers\Behaviours\HasConfig;
 use A17\TwillTransformers\Behaviours\HasLocale;
 use A17\TwillTransformers\Exceptions\Repository;
@@ -138,6 +139,7 @@ trait RepositoryTrait
             if (
                 blank($templateName) &&
                 is_object($object) &&
+                !$object instanceof Transformer &&
                 method_exists($object, $name)
             ) {
                 $templateName = $object->$name();

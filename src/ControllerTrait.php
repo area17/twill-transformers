@@ -148,7 +148,7 @@ trait ControllerTrait
                     $this->config('templates.default')));
     }
 
-    public function getTemplateName($data)
+    public function getTemplateName($data = [])
     {
         return $data['template_name'] ??
             ($data['templateName'] ??

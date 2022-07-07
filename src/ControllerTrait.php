@@ -15,6 +15,8 @@ trait ControllerTrait
 {
     use HasConfig;
 
+    public $templateName;
+
     /**
      * @return bool
      */
@@ -55,9 +57,11 @@ trait ControllerTrait
     {
         $transformerClass = $this->getTransformerClass($transformerClass);
 
-        if (!isset($this->repositoryClass) && blank($transformerClass)) {
+        if (blank($transformerClass)) {
             Repository::missingClass(__CLASS__);
         }
+
+        $this->templateName ??= $view;
 
         $data = $this->viewData($data, $transformerClass);
 
@@ -75,6 +79,7 @@ trait ControllerTrait
                 ? app($this->repositoryClass)->makeViewData(
                     $data,
                     $transformerClass,
+                    $this,
                 )
                 : $data;
 
@@ -118,7 +123,21 @@ trait ControllerTrait
 
     public function getTransformerClass($transformerClass = null)
     {
-        return $transformerClass ?? ($this->transformerClass ?? null);
+        if (filled($transformerClass)) {
+            return $transformerClass;
+        }
+
+        if (filled($this->transformerClass ?? null)) {
+            return $this->transformerClass;
+        }
+
+        if (filled($this->repositoryClass ?? null)) {
+            $repository = app($this->repositoryClass);
+
+            return $repository->getTransformerClass();
+        }
+
+        return null;
     }
 
     public function makeView($view = null, $data = null)

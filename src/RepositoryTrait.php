@@ -16,11 +16,15 @@ trait RepositoryTrait
 {
     use ClassFinder, HasConfig, HasLocale;
 
-    public function makeViewData($data = [], $transformerClass = null)
-    {
+    public function makeViewData(
+        $data = [],
+        $transformerClass = null,
+        $controller = null
+    ) {
         return $this->makeViewDataTransformer(
             $data,
             $transformerClass,
+            $controller,
         )->transform();
     }
 
@@ -31,7 +35,8 @@ trait RepositoryTrait
 
     public function makeViewDataTransformer(
         $subject = [],
-        $transformerClass = null
+        $transformerClass = null,
+        $controller = null
     ) {
         if (is_numeric($subject)) {
             $subject = $this->getById($subject);
@@ -41,7 +46,8 @@ trait RepositoryTrait
 
         return $transformer->setData([
             'template_name' =>
-                $this->getTemplateName($subject, $transformer) ?? null,
+                $this->getTemplateName($subject, $transformer, $controller) ??
+                null,
             'type' => $this->getRepositoryType(),
             'data' => $subject,
             'global' => $this->generateGlobalData(),
@@ -56,10 +62,18 @@ trait RepositoryTrait
     {
         $objects[] = $this;
 
-        return collect($objects)->reduce(
+        $templateName = collect($objects)->reduce(
             fn($name, $object) => $name ??
                 $this->getTemplateNameFromObject($object),
         );
+
+        if (blank($templateName)) {
+            throw new \Exception(
+                'The templateName property could not be found on repository, controller and transformer.',
+            );
+        }
+
+        return $templateName;
     }
 
     /**
@@ -89,37 +103,48 @@ trait RepositoryTrait
 
     protected function getTemplateNameFromObject($object)
     {
-        $templateName = isset($object->templateName)
-            ? $object->templateName
-            : (isset($object->template_name)
-                ? $object->template_name
-                : null);
+        $templateName = null;
 
-        if (blank($templateName)) {
-            try {
-                $templateName = $object['templateName'];
-            } catch (\Throwable $exception) {
-            }
+        $items = ['template_name', 'layout_name', 'template'];
+
+        $names = [];
+
+        foreach ($items as $item) {
+            $names[] = $item;
+            $names[] = Str::camel($item);
+            $names[] = Str::studly($item);
+            $names[] = 'get' . Str::studly($item);
         }
 
-        if (blank($templateName)) {
-            try {
-                $templateName = $object['template_name'];
-            } catch (\Throwable $exception) {
-            }
-        }
+        $isTraversable = is_traversable($object);
 
-        if (blank($templateName)) {
-            try {
-                $templateName = $object->getTemplateName();
-            } catch (\Throwable $exception) {
+        foreach ($names as $name) {
+            if (
+                blank($templateName) &&
+                $isTraversable &&
+                isset($object[$name])
+            ) {
+                $templateName = $object[$name];
             }
-        }
 
-        if (blank($templateName)) {
-            try {
-                $templateName = $object->getTemplate();
-            } catch (\Throwable $exception) {
+            if (
+                blank($templateName) &&
+                is_object($object) &&
+                property_exists($object, $name)
+            ) {
+                $templateName = $object->$name;
+            }
+
+            if (
+                blank($templateName) &&
+                is_object($object) &&
+                method_exists($object, $name)
+            ) {
+                $templateName = $object->$name();
+            }
+
+            if (filled($templateName)) {
+                break;
             }
         }
 

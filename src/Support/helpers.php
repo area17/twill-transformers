@@ -180,6 +180,9 @@ if (!function_exists('fallback_locale')) {
 if (!function_exists('runningInBlast')) {
     function runningInBlast($definedVars)
     {
-        return filled($definedVars['runningInStorybook'] ?? $definedVars['canvasBgColor'] ?? null);
+        return filled(
+            $definedVars['runningInStorybook'] ??
+                ($definedVars['canvasBgColor'] ?? null),
+        );
     }
 }

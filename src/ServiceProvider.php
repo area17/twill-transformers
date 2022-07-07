@@ -78,7 +78,9 @@ class ServiceProvider extends IlluminateServiceProvider
     private function bootBladeDirectives(): void
     {
         Blade::directive('transformer', function ($expression) {
-            return app(BladeTransformer::class)->compileTransformer($expression);
+            return app(BladeTransformer::class)->compileTransformer(
+                $expression,
+            );
         });
     }
 

@@ -52,6 +52,11 @@ abstract class Transformer implements TransformerContract, ArrayAccess
      */
     protected $pageKey;
 
+    /**
+     * @var string|null
+     */
+    protected $templateName;
+
     public function __construct($data = null)
     {
         if (is_object($data) && method_exists($data, 'getGlobalMediaParams')) {
@@ -163,10 +168,9 @@ abstract class Transformer implements TransformerContract, ArrayAccess
             return $this->template_name;
         }
 
-        return ($this->get('template_name') ??
-                    ($this->callMethod('templateName') ??
-                        ($this->config('templates.default') ??
-                            Template::notFound())));
+        return $this->get('template_name') ??
+            ($this->callMethod('templateName') ??
+                ($this->config('templates.default') ?? Template::notFound()));
     }
 
     /**
@@ -317,19 +321,21 @@ abstract class Transformer implements TransformerContract, ArrayAccess
      */
     public function offsetExists($offset)
     {
-        $contentArray = to_array($this->content ?? null);
+        $contentArray = $this->getBlockContents($this);
 
         return property_exists($this, $offset) ||
             (is_array($contentArray) && isset($contentArray[$offset])) ||
             isset($this->data->{$offset}) ||
-            isset($this->block->{$offset}) ||
+            isset($this->getBlock()->$offset) ||
             (is_iterable($this->data) &&
                 (isset($this->data[$offset]) ||
                     isset($this->data['data'][$offset]) ||
-                    isset(to_array($this->data['content'] ?? null)[$offset]) ||
+                    isset($this->getBlockContents($this->data)[$offset]) ||
                     isset($this->data['data'][$offset]) ||
-                    isset($this->data['data']['content'][$offset]) ||
-                    isset($this->data['block'][$offset])));
+                    isset(
+                        $this->getBlockContents($this->data['data'] ?? null)[$offset],
+                    ) ||
+                    isset($this->getBlock($this->data)[$offset])));
     }
 
     /**
@@ -379,6 +385,10 @@ abstract class Transformer implements TransformerContract, ArrayAccess
 
         if ($name === 'browsers' && $this instanceof Block) {
             return $this->getBrowsers();
+        }
+
+        if ($name === 'data' && is_traversable($data) && isset($data['data'])) {
+            return $data['data'];
         }
 
         if (
@@ -432,12 +442,12 @@ abstract class Transformer implements TransformerContract, ArrayAccess
         }
 
         if (is_iterable($data)) {
-            if (isset(to_array($data['content'] ?? null)[$name])) {
-                return to_array($data['content'])[$name];
+            if (isset($this->getBlockContents($data)[$name])) {
+                return $this->getBlockContents($data)[$name];
             }
 
-            if (isset(to_array($data['data']['content'] ?? null)[$name])) {
-                return to_array($data['data']['content'])[$name];
+            if (isset($this->getBlockContents($data['data'] ?? null)[$name])) {
+                return $this->getBlockContents($data['data'] ?? null)[$name];
             }
         }
 
@@ -583,5 +593,32 @@ abstract class Transformer implements TransformerContract, ArrayAccess
         if (is_traversable($this->data)) {
             $this->data[$property] = $value;
         }
+    }
+
+    public function getItem($name, $from = null)
+    {
+        $from = $from ?? $this->data;
+
+        if (property_exists($this, $name)) {
+            return $this->content;
+        }
+
+        $value = $value ?? (isset($from[$name]) ? $from[$name] : []);
+
+        return to_array($value);
+    }
+
+    public function getBlockContents($from = null)
+    {
+        $from = $from ?? $this->data;
+
+        return $this->getItem('content');
+    }
+
+    public function getBlock($from = null)
+    {
+        $from = $from ?? $this->data;
+
+        return $this->getItem('block');
     }
 }

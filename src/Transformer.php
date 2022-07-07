@@ -155,12 +155,18 @@ abstract class Transformer implements TransformerContract, ArrayAccess
      */
     protected function getTemplate()
     {
-        return $this->templateName ??
-            ($this->template_name ??
-                ($this->get('template_name') ??
+        if (property_exists($this, 'templateName')) {
+            return $this->templateName;
+        }
+
+        if (property_exists($this, 'template_name')) {
+            return $this->template_name;
+        }
+
+        return ($this->get('template_name') ??
                     ($this->callMethod('templateName') ??
                         ($this->config('templates.default') ??
-                            Template::notFound()))));
+                            Template::notFound())));
     }
 
     /**

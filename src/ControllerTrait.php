@@ -49,9 +49,9 @@ trait ControllerTrait
     }
 
     /**
-     * @param null $data
-     * @param null $view
-     * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View|null
+     * @param mixed $data
+     * @param string|null $view
+     * @return string|\Illuminate\Contracts\View\Factory|\Illuminate\View\View|null
      */
     public function view($data = null, $view = null, $transformerClass = null)
     {
@@ -187,5 +187,12 @@ trait ControllerTrait
         }
 
         return app($this->repositoryClass)->getTemplateName();
+    }
+
+    public function setTemplate(string $name): self
+    {
+        $this->templateName = $name;
+
+        return $this;
     }
 }

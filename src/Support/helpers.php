@@ -186,3 +186,22 @@ if (!function_exists('runningInBlast')) {
         );
     }
 }
+
+if (!function_exists('strip_tags_recursively')) {
+    function strip_tags_recursively(Collection|array $subject, string $tags = ''): array
+    {
+        $subject = (new Collection($subject))->map(function ($value, $key) use ($tags) {
+            if (is_traversable($value)) {
+                return strip_tags_recursively($value, $tags);
+            }
+
+            if (!is_string($value)) {
+                return $value;
+            }
+
+            return strip_tags($value, $tags);
+        });
+
+        return $subject->toArray();
+    }
+}

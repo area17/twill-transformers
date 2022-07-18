@@ -3,6 +3,7 @@
 namespace A17\TwillTransformers;
 
 use ArrayAccess;
+use App\Support\Constants;
 use Illuminate\Support\Str;
 use Illuminate\Support\Collection;
 use Illuminate\Database\Eloquent\Model;
@@ -96,7 +97,7 @@ abstract class Transformer implements TransformerContract, ArrayAccess
             $sanitized['transformed'] = true;
         }
 
-        return $sanitized;
+        return strip_tags_recursively($sanitized, '<p><a><br><strong><em><ul><li>');
     }
 
     /**
@@ -140,11 +141,12 @@ abstract class Transformer implements TransformerContract, ArrayAccess
     }
 
     /**
+     * @param array|Collection|null $data
      * @return array|null
      */
     public function transform()
     {
-        return null;
+        return $this->sanitize($this->transformData());
     }
 
     /**
@@ -620,5 +622,18 @@ abstract class Transformer implements TransformerContract, ArrayAccess
         $from = $from ?? $this->data;
 
         return $this->getItem('block');
+    }
+
+    public function transformData(array|null $data = null): array|Collection
+    {
+        return $data ?? $this->getData();
+    }
+
+    /**
+     * @throws \A17\TwillTransformers\Exceptions\Transformer
+     */
+    public function __invoke(array|null $data = null): array|Collection
+    {
+        return $this->transform($data);
     }
 }

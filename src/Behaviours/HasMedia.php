@@ -35,9 +35,9 @@ trait HasMedia
     }
 
     /**
-     * @param null $object
-     * @param null $role
-     * @param null $crop
+     * @param object|null $object
+     * @param string|null $role
+     * @param string|null $crop
      * @return array
      */
     public function transformImage($object = null, $role = null, $crop = null)

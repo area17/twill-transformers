@@ -18,7 +18,7 @@ class Media extends Transformer
      */
     public function transform()
     {
-        return $this->generateMediaArray($this);
+        return $this->generateMediaArray($this, $this->role, $this->crop);
     }
 
     /**

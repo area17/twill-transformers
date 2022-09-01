@@ -406,6 +406,10 @@ trait HasMedia
      */
     public function mediasParamsForBlocks()
     {
+        if (filled($this->globalMediaParams ?? null)) {
+            return $this->globalMediaParams;
+        }
+
         return Croppings::BLOCK_EDITOR;
     }
 

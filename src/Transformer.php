@@ -112,6 +112,8 @@ abstract class Transformer implements TransformerContract, ArrayAccess
             return $this;
         }
 
+        $this->inferTemplateName($data);
+
         if (filled($this->data) && !$force) {
             TransformerException::dataAlreadySet(get_class($this));
         }
@@ -635,5 +637,12 @@ abstract class Transformer implements TransformerContract, ArrayAccess
     public function __invoke(array|null $data = null): array|Collection
     {
         return $this->transform($data);
+    }
+
+    public function inferTemplateName($data): void
+    {
+        if (is_array($data) && filled($templateName = $data['template_name'] ?? $data['templateName'] ?? null)) {
+            $this->templateName = $templateName;
+        }
     }
 }

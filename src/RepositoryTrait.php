@@ -47,7 +47,7 @@ trait RepositoryTrait
 
         return $transformer->setData([
             'template_name' =>
-                $this->getTemplateName($subject, $transformer, $controller) ??
+                $this->getTemplateName($transformer, $subject, $controller) ??
                 null,
             'type' => $this->getRepositoryType(),
             'data' => $subject,
@@ -115,6 +115,10 @@ trait RepositoryTrait
             $names[] = Str::camel($item);
             $names[] = Str::studly($item);
             $names[] = 'get' . Str::studly($item);
+        }
+
+        if (is_string($object) && class_exists($object)) {
+            $object = app($object);
         }
 
         $isTraversable = is_traversable($object);

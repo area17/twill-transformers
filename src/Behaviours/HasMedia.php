@@ -312,8 +312,11 @@ trait HasMedia
         $mediasParams =
             blank($object) || $object instanceof MediaModel
                 ? $this->getMediasParams()
-                : $object->getMediasParams() ??
-                    $this->extractMediasParamsFromModel($object);
+                : null;
+
+        $mediasParams ??= method_exists($object, 'getMediasParams')
+            ? $object->getMediasParams()
+            : $this->extractMediasParamsFromModel($object);
 
         return $mediasParams ??
             ($this->globalMediaParams ?? Croppings::BLOCK_EDITOR);

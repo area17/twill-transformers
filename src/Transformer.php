@@ -379,10 +379,10 @@ abstract class Transformer implements TransformerContract, ArrayAccess
     {
         $data ??= $this->data ?? ($this->block ?? null);
 
-        if (property_exists($this, $name)) {
+        if ($name !== 'data' && property_exists($this, $name)) {
             return $this->$name;
         }
-        
+
         if (blank($data)) {
             return null;
         }

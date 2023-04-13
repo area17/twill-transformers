@@ -96,7 +96,7 @@ trait HasBlocks
      * @param $id
      * @return mixed
      */
-    protected function getModelFromBrowserName($browserName, $id)
+    protected function getModelFromBrowserName($browserName, $id, $relatedModel = null)
     {
         $browserName = Str::beforeLast($browserName, ':');
 
@@ -105,7 +105,15 @@ trait HasBlocks
             '\\' .
             Str::singular(Str::studly($browserName));
 
-        return $class::find($id);
+        if (class_exists($class)) {
+            return $class::find($id);
+        }
+
+        if (filled($relatedModel)) {
+            return $relatedModel;
+        }
+
+        return "$browserName:$id";
     }
 
     protected function isBlock($element)

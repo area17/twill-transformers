@@ -59,6 +59,7 @@ trait HasBlocks
                 $models[$browserRelation] ?? [],
             );
 
+            // TODO: we need to get the relation model from the block model here and pass to getModelFromBrowserName()
             foreach ($ids as $id) {
                 $models[$browserRelation]->push(
                     $this->getModelFromBrowserName($browserRelation, $id),

@@ -314,6 +314,10 @@ trait HasMedia
                 ? $this->getMediasParams()
                 : null;
 
+        $mediasParams ??= ! blank($object) && $object->data instanceof \A17\Twill\Models\Block
+            ? $object->getMediasParams()
+            : null;
+
         $mediasParams ??= method_exists($object, 'getMediasParams')
             ? $object->getMediasParams()
             : $this->extractMediasParamsFromModel($object);
